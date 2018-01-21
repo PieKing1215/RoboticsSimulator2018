@@ -89,7 +89,7 @@ protected List<EToggle> toggles = new ArrayList<EToggle>();
 				if(index < comp.size()){
 					Component c = comp.get(index);
 					if(c != null){
-						Integer ctInteger = Game.getWorld().getSelf().inventory.get(c.getClass());
+						Integer ctInteger = Game.getWorld().getSelfPlayer().inventory.get(c.getClass());
 						int ct = ctInteger == null ? 0 : ctInteger;
 						
 						locked = ct <= 0;
@@ -122,7 +122,7 @@ protected List<EToggle> toggles = new ArrayList<EToggle>();
 				if(index < comp.size()){
 					Component c = comp.get(index);
 					if(c != null){
-						Integer ctInteger = Game.getWorld().getSelf().inventory.get(c.getClass());
+						Integer ctInteger = Game.getWorld().getSelfPlayer().inventory.get(c.getClass());
 						int ct = ctInteger == null ? 0 : ctInteger;
 						
 						AffineTransform t = g.getTransform();
@@ -283,8 +283,8 @@ protected List<EToggle> toggles = new ArrayList<EToggle>();
 		if(nowLeftPressed && !wasLeftPressed){
 			close();
 			System.out.println(selected);
-			if(Game.getWorld().getSelf() != null){
-				Player p = Game.getWorld().getSelf();
+			if(Game.getWorld().getSelfPlayer() != null){
+				Player p = Game.getWorld().getSelfPlayer();
 				if(selected != null){
     				try {
     					p.selectBuildItem(selected.getClass(), 0);

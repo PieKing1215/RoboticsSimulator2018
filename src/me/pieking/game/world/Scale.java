@@ -32,8 +32,8 @@ public class Scale extends Switch {
 		walls.setMass(MassType.INFINITE);
 		walls.addFixture(bf);
 		
-		walls.setAngularDamping(GameWorld.ANGULAR_DAMPING);
-		walls.setLinearDamping(GameWorld.LINEAR_DAMPING);
+		walls.setAngularDamping(GameWorld.getAngularDamping());
+		walls.setLinearDamping(GameWorld.getLinearDamping());
 		walls.translate(x, y);
 		
 	}

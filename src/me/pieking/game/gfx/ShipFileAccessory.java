@@ -150,7 +150,7 @@ public class ShipFileAccessory extends JComponent implements PropertyChangeListe
 			g.fillRect(0, 0, width, width);
 			
 			System.out.println("loading");
-			Ship s = Ship.load(f, Game.getWorld().getSelf());
+			Ship s = Ship.load(f, Game.getWorld().getSelfPlayer());
 			System.out.println("done");
 			s.construct(new Location(0, 0), 0);
 			

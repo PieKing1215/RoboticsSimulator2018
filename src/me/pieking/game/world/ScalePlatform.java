@@ -80,8 +80,8 @@ public class ScalePlatform {
 		base.setMass(MassType.INFINITE);
 		base.addFixture(bf);
 		
-		base.setAngularDamping(GameWorld.ANGULAR_DAMPING);
-		base.setLinearDamping(GameWorld.LINEAR_DAMPING);
+		base.setAngularDamping(GameWorld.getAngularDamping());
+		base.setLinearDamping(GameWorld.getLinearDamping());
 		base.translate(x, y);
 	}
 

@@ -46,8 +46,8 @@ public class Switch {
 		walls.setMass(MassType.INFINITE);
 		walls.addFixture(bf);
 		
-		walls.setAngularDamping(GameWorld.ANGULAR_DAMPING);
-		walls.setLinearDamping(GameWorld.LINEAR_DAMPING);
+		walls.setAngularDamping(GameWorld.getAngularDamping());
+		walls.setLinearDamping(GameWorld.getLinearDamping());
 		walls.translate(x, y);
 		
 	}
@@ -99,7 +99,7 @@ public class Switch {
 			color = col;
 		}
 		public Team getOpposite() {
-			return this == BLUE ? RED : (this == BLUE ? RED : NONE);
+			return this == BLUE ? RED : (this == RED ? BLUE : NONE);
 		}
 		
 	}

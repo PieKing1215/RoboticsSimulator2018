@@ -48,11 +48,11 @@ public class KeyHandler implements KeyListener{
 //		}
 		
 		if(e.getKeyCode() == KeyEvent.VK_NUMPAD5){
-			GameWorld.shipAligned = !GameWorld.shipAligned;
+			GameWorld.setShipAligned(!GameWorld.isShipAligned());
 		}
 		
-		if(Game.getWorld().getSelf() != null){
-			Player p = Game.getWorld().getSelf();
+		if(Game.getWorld().getSelfPlayer() != null){
+			Player p = Game.getWorld().getSelfPlayer();
 			if(p.hasFocus()){
         		if(e.getKeyCode() == KeyEvent.VK_B){
         			Ship.buildMode = !Ship.buildMode;
@@ -91,7 +91,7 @@ public class KeyHandler implements KeyListener{
 			
 		}
 		
-		if(Game.getWorld().getSelf() != null) Game.getWorld().getSelf().ship.keyPressed(e);
+		if(Game.getWorld().getSelfPlayer() != null) Game.getWorld().getSelfPlayer().ship.keyPressed(e);
 		
 		
 		
@@ -140,7 +140,7 @@ public class KeyHandler implements KeyListener{
 			pressed.remove((Object)e.getKeyCode()); //cast the code to Object so it uses remove(Object) instead of remove(int)
 		}
 		
-		if(Game.getWorld().getSelf() != null) Game.getWorld().getSelf().ship.keyReleased(e);
+		if(Game.getWorld().getSelfPlayer() != null) Game.getWorld().getSelfPlayer().ship.keyReleased(e);
 	}
 
 	@Override

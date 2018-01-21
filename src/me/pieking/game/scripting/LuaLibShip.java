@@ -22,7 +22,7 @@ public class LuaLibShip extends TwoArgFunction {
 	public LuaLibShip() {}
 
 	public static Ship getShip(){
-		return Game.getWorld().getSelf().ship;
+		return Game.getWorld().getSelfPlayer().ship;
 	}
 	
 	public LuaValue call(LuaValue modname, LuaValue env) {
@@ -105,7 +105,7 @@ public class LuaLibShip extends TwoArgFunction {
 	
 	static class getOrientation extends ZeroArgFunction {
 		public LuaValue call() {
-			double actual = Math.toDegrees(Game.getWorld().getSelf().base.getTransform().getRotation());
+			double actual = Math.toDegrees(Game.getWorld().getSelfPlayer().base.getTransform().getRotation());
 			double uncertainty = 1;
 			
 			int numRadars = 0;

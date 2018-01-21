@@ -119,8 +119,8 @@ public class Player {
 		base.addFixture(bf);
 		base.setMass(MassType.NORMAL);
 		
-		base.setAngularDamping(GameWorld.ANGULAR_DAMPING);
-		base.setLinearDamping(GameWorld.LINEAR_DAMPING);
+		base.setAngularDamping(GameWorld.getAngularDamping());
+		base.setLinearDamping(GameWorld.getLinearDamping());
 		
 		inventory.put(StructureComponentSquare.class, 20);
 		inventory.put(StructureComponentSlope.class, 8);
@@ -173,7 +173,7 @@ public class Player {
 	
 	public void tick(){
 		if(!dead){
-    		if(this == Game.getWorld().getSelf()){
+    		if(this == Game.getWorld().getSelfPlayer()){
     			tickControls();
     		}
     
@@ -222,7 +222,7 @@ public class Player {
     							}
     							
     							ShipComponentActivatePacket scap = new ShipComponentActivatePacket(name, ac.bounds.x + "", ac.bounds.y + "", ac.activated + "");
-    							Game.doPacketNoMe(scap);
+    							Game.sendPacket(scap);
     						}
     					}else{
         					selectedGrid = null;
@@ -246,7 +246,7 @@ public class Player {
     							}
     							
     							ShipComponentActivatePacket scap = new ShipComponentActivatePacket(name, ac.bounds.x + "", ac.bounds.y + "", ac.activated + "");
-    							Game.doPacketNoMe(scap);
+    							Game.sendPacket(scap);
     						}
     					}else if(Game.keyHandler().isPressed(KeyEvent.VK_SHIFT)){
     						damage(100);
@@ -267,7 +267,7 @@ public class Player {
     			if(buildPreview != null && buildSelected != null && hoverGrid != null){
     				try {
     					ShipAddComponentPacket sacp = new ShipAddComponentPacket(name, buildSelected.getSimpleName(), hoverGrid.x + "", hoverGrid.y + "", buildPreview.rot + "");
-						Game.doPacketNoMe(sacp);
+						Game.sendPacket(sacp);
     					
     					Component c = createComponent(buildSelected, hoverGrid.x, hoverGrid.y, buildPreview.rot);
     					if(ship.addComponent(c)){
@@ -367,7 +367,7 @@ public class Player {
     		
     		trans.concatenate(Game.getWorld().getTransform());
     		trans.scale(GameObject.SCALE, GameObject.SCALE);
-    		if(!GameWorld.shipAligned) trans.rotate(base.getTransform().getRotation(), getLocation().x, getLocation().y);
+    		if(!GameWorld.isShipAligned()) trans.rotate(base.getTransform().getRotation(), getLocation().x, getLocation().y);
     		trans.translate(getLocation().x, getLocation().y);
     		trans.translate(-0.5 * gridBoxSize * gridSize, -0.5 * gridBoxSize * gridSize);
     		
@@ -420,7 +420,7 @@ public class Player {
 	public void sendServerMotion() {
 //		System.out.println(base.getTransform().getTranslation().x + " " + base.getTransform().getTranslation().y);
 		PlayerUpdatePacket pack = new PlayerUpdatePacket(name, base.getWorldCenter().x + "", base.getWorldCenter().y + "", base.getLinearVelocity().x + "", base.getLinearVelocity().y + "", base.getTransform().getRotation() + "", base.getAngularVelocity() + "");
-		Game.doPacketNoMe(pack);
+		Game.sendPacket(pack);
 	}
 
 	public Location getLocation() {
@@ -433,7 +433,7 @@ public class Player {
 		
 		if(!Ship.buildMode) ship.render(g);
 		
-		if(this == Game.getWorld().getSelf()){
+		if(this == Game.getWorld().getSelfPlayer()){
     		int gridSize = ship.getGridSize();
     		float gridBoxSize = Component.unitSize;
     		
@@ -543,7 +543,7 @@ public class Player {
     		
         		AffineTransform rot = AffineTransform.getRotateInstance(-base.getTransform().getRotation(), gridBoxSize * hoverGrid.x + gridBoxSize/2, gridBoxSize * hoverGrid.y + gridBoxSize/2);
         		
-        		if(GameWorld.shipAligned){
+        		if(GameWorld.isShipAligned()){
         			rot = new AffineTransform();
         		}
         		
@@ -652,7 +652,7 @@ public class Player {
 	public void constructShip(){
 		if(bods != null){
 			for(Body b : bods){
-				Game.getWorld().world.removeBody(b);
+				Game.getWorld().getWorld().removeBody(b);
 			}
 		}
 		
@@ -674,7 +674,7 @@ public class Player {
 			wj.setDampingRatio(1);
 			wj.setFrequency(0);
 			joints.add(wj);
-			Game.getWorld().world.addJoint(wj);
+			Game.getWorld().getWorld().addJoint(wj);
 			
 			for(GameObject b2 : bods){
 				if(b2 == b) continue;
@@ -683,10 +683,10 @@ public class Player {
 				wj.setDampingRatio(1);
 				wj.setFrequency(0);
 				joints.add(wj);
-				Game.getWorld().world.addJoint(wj);
+				Game.getWorld().getWorld().addJoint(wj);
 			}
 			
-			Game.getWorld().world.addBody(b);
+			Game.getWorld().getWorld().addBody(b);
 		}
 		
 //		base.getTransform().setRotation(rot);
@@ -711,7 +711,7 @@ public class Player {
 			if(selectedComponent != null){
 				
 				ShipRemoveComponentPacket srcp = new ShipRemoveComponentPacket(name, selectedComponent.bounds.x + "", selectedComponent.bounds.y + "");
-				Game.doPacketNoMe(srcp);
+				Game.sendPacket(srcp);
 				
 				ship.removeComponent(selectedComponent);
 				invAdd(selectedComponent.getClass(), 1);
@@ -725,7 +725,7 @@ public class Player {
 	public void destroyComponent(Component c){
 		if(c != null){
 			ShipRemoveComponentPacket srcp = new ShipRemoveComponentPacket(name, c.bounds.x + "", c.bounds.y + "");
-			Game.doPacketNoMe(srcp);
+			Game.sendPacket(srcp);
 			
 			if(c instanceof ActivatableComponent){
 				((ActivatableComponent) c).deactivate();
@@ -758,12 +758,12 @@ public class Player {
 		
 		dead = true;
 		for(WeldJoint j : joints){
-			Game.getWorld().world.removeJoint(j);
+			Game.getWorld().getWorld().removeJoint(j);
 		}
 		
-		if(this == Game.getWorld().getSelf()){
+		if(this == Game.getWorld().getSelfPlayer()){
 			PlayerDiePacket pdp = new PlayerDiePacket(name);
-			Game.doPacketNoMe(pdp);
+			Game.sendPacket(pdp);
 			
 			Scheduler.delayedTask(() -> {
 				chooseShip();
@@ -790,10 +790,10 @@ public class Player {
 			final Component com = c;
 			Scheduler.delayedTask(() -> {
 				ShipRemoveComponentPacket srcp = new ShipRemoveComponentPacket(name, com.bounds.x + "", com.bounds.y + "");
-				Game.doPacketNoMe(srcp);
+				Game.sendPacket(srcp);
 				ship.removeComponent(com);
 				
-				Game.getWorld().world.removeBody(com.lastBody);
+				Game.getWorld().getWorld().removeBody(com.lastBody);
 			}, Rand.range(60 * 3, 60 * 5));
 			
 			for(int i = 0; i < 10; i++){
@@ -829,7 +829,7 @@ public class Player {
 		Ship s = selectShip();
 	    
 	    try {
-			ShipDataPacket sdp = new ShipDataPacket(Game.getWorld().getSelf().name, s.saveDataString());
+			ShipDataPacket sdp = new ShipDataPacket(Game.getWorld().getSelfPlayer().name, s.saveDataString());
 			Game.doPacket(sdp);
 		}catch (IOException e1) {
 			e1.printStackTrace();

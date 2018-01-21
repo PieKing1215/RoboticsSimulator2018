@@ -17,6 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.sun.javafx.geom.Rectangle;
+
 import me.pieking.game.events.KeyHandler;
 import me.pieking.game.events.MouseHandler;
 import me.pieking.game.gfx.Disp;
@@ -41,31 +43,55 @@ import me.pieking.game.world.Switch.Team;
 
 public class Game {
 
+	/** The width of the window content, in pixels. */
 	private static final int WIDTH = 800;
+	/** The height of the window content, in pixels. */
 	private static final int HEIGHT = 600;
 	
-	private static String name = "GameTemplate";
-	private static String version = "0.1.0"; // https://semver.org/
+	/** The name of the game. */
+	private static final String NAME = "Robotics Simulator 2018";
 	
+	/** Follows Semantic Versioning as per <a href="// https://semver.org/">semver.org</a>.*/
+	private static final String VERSION = "0.2.0"; 
+	
+	/** Whether the game is running or not. */
 	private static boolean running = false;
 	
+	/** The current FPS. */
 	private static int fps = 0;
+	/** The current TPS. */
 	private static int tps = 0;
 	
-	private static JFrame frame;
-	
-	private static Disp disp;
+	/** 
+	 * Increments by 1 every time {@link #tick()} is called.<br>
+	 * If the game is running at normal speed, this means {@link #time} will increase once every 1/60 of a second.
+	 */
 	private static int time = 0;
 	
+	/** The active frame. */
+	private static JFrame frame;
+	/** The {@link Disp} inside {@link #frame}. */
+	private static Disp disp;
+	
+	/** The {@link KeyHandler} registered to {@link #disp}.*/
 	private static KeyHandler keyHandler;
+	/** The {@link MouseHandler} registered to {@link #disp}.*/
 	private static MouseHandler mouseHandler;
 	
+	/** The active world. */
 	private static GameWorld gw;
 	
+	/**
+	 * Run the game with arguments
+	 */
 	public static void runGame(String[] args) {
 		run();
 	}
 
+	/**
+	 * Initialize and run the game loop.<br>
+	 * This method ensures that as long as the game is running, {@link #tick()} is called 60 times per second, and {@link #render()} is called as often as possible.
+	 */
 	private static void run(){
 		init();
 		
@@ -123,13 +149,17 @@ public class Game {
 		
 	}
 	
+	/**
+	 * Initialize the game 
+	 */
 	private static void init(){
 		
 //		try {
 //			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //		} catch (Exception e) {}
 		
-		frame = new JFrame(name + " v" + version + " | " + fps + " FPS " + tps + " TPS");
+		// Doing this hack with the JPanel makes it so the contents of the frame are actually the right dimensions.
+		frame = new JFrame(NAME + " v" + VERSION + " | " + fps + " FPS " + tps + " TPS");
 		JPanel jp = new JPanel();
 		jp.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		frame.add(jp);
@@ -155,13 +185,14 @@ public class Game {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				if(!isServer() && ClientStarter.clientStarter.getClient().isConnected()){
-    				LeavePacket pack = new LeavePacket(gw.getSelf().name);
-    				doPacketNoMe(pack);
+    				LeavePacket pack = new LeavePacket(gw.getSelfPlayer().name);
+    				sendPacket(pack);
 				}
 				
 				System.exit(0);
 			}
 		});
+		
 		frame.setLocationRelativeTo(null);
 		
 		disp = new Disp(WIDTH, HEIGHT, WIDTH, HEIGHT);
@@ -197,37 +228,37 @@ public class Game {
 				System.out.println("Connected to the server.");
 				JoinPacket pack = new JoinPacket("Player " + System.currentTimeMillis(), "1", "1");
 				Game.doPacket(pack);
-				System.out.println("packarino " + pack.getCreated());
-				Game.getWorld().selfPlayer = pack.getCreated();
+				Game.getWorld().setSelfPlayer(pack.getCreated());
 				
-				Ship s = gw.selfPlayer.selectShip();
+				Ship s = gw.getSelfPlayer().selectShip();
 			    
 			    try {
-					ShipDataPacket sdp = new ShipDataPacket(Game.getWorld().getSelf().name, s.saveDataString());
+					ShipDataPacket sdp = new ShipDataPacket(Game.getWorld().getSelfPlayer().name, s.saveDataString());
 					Game.doPacket(sdp);
 				}catch (IOException e1) {
 					e1.printStackTrace();
 				}
 				
 			} else {
-				System.out.println("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
-				long start = System.currentTimeMillis();
-				gw.selfPlayer = new Player("Cool boi", 900f / GameObject.SCALE * GameWorld.FIELD_SCALE, 500f / GameObject.SCALE * GameWorld.FIELD_SCALE, Team.RED);
-				System.out.println("time = " + (System.currentTimeMillis() - start));
+				gw.setSelfPlayer(new Player("Player 1", 900f / GameObject.SCALE * GameWorld.FIELD_SCALE, 500f / GameObject.SCALE * GameWorld.FIELD_SCALE, Team.RED));
 
-				Ship s = gw.selfPlayer.selectShip();
-				gw.selfPlayer.loadShip(s);
+				Ship s = gw.getSelfPlayer().selectShip();
+				gw.getSelfPlayer().loadShip(s);
 				
-				gw.addPlayer(gw.selfPlayer);
+				gw.addPlayer(gw.getSelfPlayer());
 				
 			}
 		}
 		
 	}
 	
+	/**
+	 * Update everything.<br>
+	 * This method expects to be called 60 times per second.
+	 */
 	private static void tick(){
-		//System.out.println(fps + " " + tps);
-		frame.setTitle(name + (isServer() ? " (Server) " : "") + " v" + version + " | " + fps + " FPS " + tps + " TPS");
+		
+		frame.setTitle(NAME + (isServer() ? " (Server) " : "") + " v" + VERSION + " | " + fps + " FPS " + tps + " TPS");
 		
 		try{
 			gw.tick();
@@ -249,68 +280,125 @@ public class Game {
 		time++;
 	}
 	
+	/**
+	 * Tells {@link Render} to render to {@link #disp}
+	 */
 	private static void render(){
 		Render.render(disp);
 		disp.paint(disp.getGraphics());
 	}
 	
+	/**
+	 * @return the display name of the game.
+	 */
 	public static String getName(){
-		return name;
+		return NAME;
 	}
 
+	/**
+	 * @return the version of the game.
+	 * @see #VERSION
+	 */
 	public static String getVersion(){
-		return version;
+		return VERSION;
 	}
 
+	/**
+	 * @return the number of ticks since the game was started.
+	 * @see #time
+	 */
 	public static int getTime() {
-		return time ;
+		return time;
 	}
 	
+	/**
+	 * Stop the game by calling {@link System#exit(int)}.
+	 * @param status - exit status.
+	 * @see System#exit(int)
+	 */
 	public static void stop(int status){
 		System.exit(status);
 	}
 	
+	/**
+	 * @return the {@link KeyHandler} registered to the active {@link Disp}.
+	 */
 	public static KeyHandler keyHandler(){
 		return keyHandler;
 	}
 	
+	/**
+	 * @return the {@link MouseHandler} registered to the active {@link Disp}.
+	 */
 	public static MouseHandler mouseHandler(){
 		return mouseHandler;
 	}
 	
+	/**
+	 * @return the width of the window contents, in pixels.
+	 */
 	public static int getWidth(){
 		return WIDTH;
 	}
 	
+	/**
+	 * @return the height of the window contents, in pixels.
+	 */
 	public static int getHeight(){
 		return HEIGHT;
 	}
 	
+	/**
+	 * @return the active {@link Disp}.
+	 */
 	public static Disp getDisp(){
 		return disp;
 	}
 
+	/**
+	 * @return the active {@link GameWorld}.
+	 */
 	public static GameWorld getWorld() {
 		return gw;
 	}
 	
+	/**
+	 * @return <code>true</code> if the running {@link Game} is a server.<br>
+	 * <code>false</code> otherwise
+	 */
 	public static boolean isServer(){
 		return ServerStarter.isServer;
 	}
 	
-	public static void doPacket(Packet p){
-		if(!isServer()) ClientStarter.clientStarter.writePacket(p);
-		p.doAction();
+	/**
+	 * Sends a packet to the conencted server, and also runs it locally.
+	 * @param pack - the {@link Packet} to process
+	 */
+	public static void doPacket(Packet pack){
+		if(!isServer()) ClientStarter.clientStarter.writePacket(pack);
+		pack.doAction();
 	}
 	
-	public static void doPacketNoMe(Packet p){
-		if(!isServer()) ClientStarter.clientStarter.writePacket(p);
+	/**
+	 * Sends a packet to the conencted server.
+	 * @param pack - the {@link Packet} to process
+	 */
+	public static void sendPacket(Packet pack){
+		if(!isServer()) ClientStarter.clientStarter.writePacket(pack);
 	}
 	
+	/**
+	 * @return the last mouse position relative to the top left corner of the screen.
+	 * Coordinates are in pixels.
+	 */
 	public static Point mouseLoc() {
 		return keyHandler.lastMousePos == null ? new Point(0, 0) : keyHandler.lastMousePos;
 	}
 
+	/**
+	 * @return <code>true</code> if the game is in debug mode.<br>
+	 * <code>false</code> otherwise.
+	 */
 	public static boolean debug() {
 		return false;
 	}

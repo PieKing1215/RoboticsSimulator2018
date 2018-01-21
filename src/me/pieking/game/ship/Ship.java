@@ -113,16 +113,16 @@ public class Ship {
     					if(ac.toggleMode) {
     						ac.toggle();
     						
-    						if(pl == Game.getWorld().getSelf()){
+    						if(pl == Game.getWorld().getSelfPlayer()){
 	    						ShipComponentActivatePacket scap = new ShipComponentActivatePacket(pl.name, ac.bounds.x + "", ac.bounds.y + "", ac.activated + "");
-	    						Game.doPacketNoMe(scap);
+	    						Game.sendPacket(scap);
 	    					}
     					}else{
     						ac.activate();
 							
-							if(pl == Game.getWorld().getSelf()){
+							if(pl == Game.getWorld().getSelfPlayer()){
 	    						ShipComponentActivatePacket scap = new ShipComponentActivatePacket(pl.name, ac.bounds.x + "", ac.bounds.y + "", true + "");
-	    						Game.doPacketNoMe(scap);
+	    						Game.sendPacket(scap);
 	    					}
     					}
     				}
@@ -139,9 +139,9 @@ public class Ship {
     				ActivatableComponent ac = (ActivatableComponent) c;
     				if(ac.deactKeys.contains(e.getKeyCode()) && !ac.toggleMode) {
     					ac.deactivate();
-    					if(pl == Game.getWorld().getSelf()){
+    					if(pl == Game.getWorld().getSelfPlayer()){
     						ShipComponentActivatePacket scap = new ShipComponentActivatePacket(pl.name, ac.bounds.x + "", ac.bounds.y + "", false + "");
-    						Game.doPacketNoMe(scap);
+    						Game.sendPacket(scap);
     					}
     				}
     			}
