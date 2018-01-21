@@ -45,6 +45,7 @@ public class Game {
 	private static final int HEIGHT = 600;
 	
 	private static String name = "GameTemplate";
+	private static String version = "0.1.0"; // https://semver.org/
 	
 	private static boolean running = false;
 	
