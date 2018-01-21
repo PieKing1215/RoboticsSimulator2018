@@ -45,7 +45,6 @@ public class Game {
 	private static final int HEIGHT = 600;
 	
 	private static String name = "GameTemplate";
-	private static String version = "0.0.0-r0";
 	
 	private static boolean running = false;
 	
