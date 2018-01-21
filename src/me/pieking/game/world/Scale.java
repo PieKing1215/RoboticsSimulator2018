@@ -8,7 +8,7 @@ import org.dyn4j.geometry.Rectangle;
 
 import me.pieking.game.robot.component.Component;
 
-public class Scale extends Switch {
+public class Scale extends Balance {
 
 	public Scale(double x, double y, boolean blueTop) {
 		super(x, y, blueTop);

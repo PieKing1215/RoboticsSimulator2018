@@ -31,7 +31,7 @@ import me.pieking.game.gfx.Images;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.robot.Robot;
 import me.pieking.game.robot.component.Component;
-import me.pieking.game.world.Switch.Team;
+import me.pieking.game.world.Balance.Team;
 
 public class GameWorld {
 	public static final int BOOST_TIME = 10; //TODO: move power up properties to their own class
@@ -58,7 +58,7 @@ public class GameWorld {
 	private List<PowerCube> cubes = new ArrayList<PowerCube>();
 	private List<PowerCube> exchanging = new ArrayList<PowerCube>();
 	private List<ScalePlatform> scalePlatforms = new ArrayList<ScalePlatform>();
-	private List<Switch> scales = new ArrayList<Switch>();
+	private List<Balance> scales = new ArrayList<Balance>();
 	private Scale scale;
 	
 	private double fieldXofs = 28.1;
@@ -66,7 +66,7 @@ public class GameWorld {
 
 	private int gameTime = ((2 * 60) + 30) * 60;
 	
-	private HashMap<Team, TeamProperties> teamProperties = new HashMap<Switch.Team, TeamProperties>();
+	private HashMap<Team, TeamProperties> teamProperties = new HashMap<Balance.Team, TeamProperties>();
 	
 	private static Vector2 mouseWorldPos = new Vector2();
 	
@@ -307,7 +307,7 @@ public class GameWorld {
 	}
 
 	/**
-	 * Renders the world (including the field base, {@link PowerCube PowerCubes}, {@link Switch Switches}, {@link Scale Scales}, {@link Player Players}, etc.).<br>
+	 * Renders the world (including the field base, {@link PowerCube PowerCubes}, {@link Balance Switches}, {@link Scale Scales}, {@link Player Players}, etc.).<br>
 	 * Also {@link #renderHUD(Graphics2D) renders the HUD}.
 	 * @param g - the {@link Graphics2D} object to render onto.
 	 */
@@ -352,9 +352,9 @@ public class GameWorld {
 			o.render(g);
 		}
 		
-		List<Switch> sca = new ArrayList<Switch>();
+		List<Balance> sca = new ArrayList<Balance>();
 		sca.addAll(scales);
-		for(Switch o : sca){
+		for(Balance o : sca){
 			if(o != null) o.render(g);
 		}
 		
@@ -428,9 +428,9 @@ public class GameWorld {
 			o.render(g);
 		}
 		
-		List<Switch> sca = new ArrayList<Switch>();
+		List<Balance> sca = new ArrayList<Balance>();
 		sca.addAll(scales);
-		for(Switch o : sca){
+		for(Balance o : sca){
 			if(o != null) o.render(g);
 		}
 		
@@ -738,9 +738,9 @@ public class GameWorld {
 		}
 		
 		// tick the scale and switches
-		List<Switch> sca = new ArrayList<Switch>();
+		List<Balance> sca = new ArrayList<Balance>();
 		sca.addAll(scales);
-		for(Switch o : sca){
+		for(Balance o : sca){
 			if(o != null) o.tick();
 		}
 		
@@ -882,10 +882,10 @@ public class GameWorld {
 	}
 	
 	/**
-	 * Adds a {@link Switch} to the world.
-	 * @param balance - the {@link Switch} to add.
+	 * Adds a {@link Balance} to the world.
+	 * @param balance - the {@link Balance} to add.
 	 */
-	public void addScale(Switch balance){
+	public void addScale(Balance balance){
 		scales.add(balance);
 		scalePlatforms.add(balance.getRedPlatform());
 		scalePlatforms.add(balance.getBluePlatform());
@@ -1108,9 +1108,9 @@ public class GameWorld {
 	}
 	
 	/**
-	 * Returns the {@link Switch} on the side of the specified {@link Team}.
-	 * @param team - the {@link Team} to get the {@link Switch}.
-	 * @return the {@link Team}'s {@link Switch}.
+	 * Returns the {@link Balance} on the side of the specified {@link Team}.
+	 * @param team - the {@link Team} to get the {@link Balance}.
+	 * @return the {@link Team}'s {@link Balance}.
 	 */
 	public Switch getSwitch(Team team){
 		return getProperties(team).getSwitch();
@@ -1142,7 +1142,7 @@ public class GameWorld {
 	}
 
 	/**
-	 * @return a {@link List} containing all of the {@link ScalePlatform}s from the {@link Scale} and two {@link Switch}es
+	 * @return a {@link List} containing all of the {@link ScalePlatform}s from the {@link Scale} and two {@link Balance}es
 	 */
 	public List<ScalePlatform> getScalePlatforms() {
 		List<ScalePlatform> sp = new ArrayList<ScalePlatform>();

@@ -39,7 +39,7 @@ import me.pieking.game.sound.Sound;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.GameWorld;
 import me.pieking.game.world.Player;
-import me.pieking.game.world.Switch.Team;
+import me.pieking.game.world.Balance.Team;
 
 public class Game {
 
