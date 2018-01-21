@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import me.pieking.game.Game;
+import me.pieking.game.Vars;
 import me.pieking.game.command.Command;
 import me.pieking.game.ship.Ship;
 import me.pieking.game.world.GameWorld;
@@ -87,13 +88,13 @@ public class KeyHandler implements KeyListener{
 				Game.getWorld().useForce(e.isControlDown() ? Team.RED : Team.BLUE);
 			}else if(e.getKeyCode() == KeyEvent.VK_NUMPAD3){
 				Game.getWorld().useLevitate(e.isControlDown() ? Team.RED : Team.BLUE);
+			}else if(e.getKeyCode() == KeyEvent.VK_NUMPAD4){
+				Vars.showCollision = !Vars.showCollision;
 			}
 			
 		}
 		
 		if(Game.getWorld().getSelfPlayer() != null) Game.getWorld().getSelfPlayer().ship.keyPressed(e);
-		
-		
 		
 	}
 	

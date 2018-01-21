@@ -335,13 +335,15 @@ public class GameWorld {
 		bodies.addAll(getWorld().getBodies());
 		for(Body b : bodies){
 			GameObject o = (GameObject) b;
-//			o.render(g);
+			if(Vars.showCollision) o.render(g);
 		}
 
-		List<GameObject> wal = new ArrayList<GameObject>();
-		wal.addAll(walls);
-		for(GameObject o : wal){
-			o.render(g);
+		if(Vars.showCollision){
+    		List<GameObject> wal = new ArrayList<GameObject>();
+    		wal.addAll(walls);
+    		for(GameObject o : wal){
+    			o.render(g);
+    		}
 		}
 		
 		List<GameObject> par = new ArrayList<GameObject>();
@@ -368,8 +370,10 @@ public class GameWorld {
 			if(p != null) p.render(g);
 		}
 		
-		g.setColor(Color.GREEN);
-		g.drawRect(0, 0, 10, 10);
+		if(Vars.showCollision){
+    		g.setColor(Color.GREEN);
+    		g.drawRect(-5, -5, 10, 10);
+		}
 		
 		g.setTransform(ot);
 		
@@ -410,10 +414,12 @@ public class GameWorld {
 			if(Vars.showCollision) o.render(g);
 		}
 
-		List<GameObject> wal = new ArrayList<GameObject>();
-		wal.addAll(walls);
-		for(GameObject o : wal){
-			o.render(g);
+		if(Vars.showCollision){
+    		List<GameObject> wal = new ArrayList<GameObject>();
+    		wal.addAll(walls);
+    		for(GameObject o : wal){
+    			o.render(g);
+    		}
 		}
 		
 		List<GameObject> par = new ArrayList<GameObject>();
