@@ -8,7 +8,7 @@ import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
 import me.pieking.game.Utils;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.GameObject.BodyType;
 import me.pieking.game.world.GameObjectFilter.FilterType;
 import me.pieking.game.world.Switch.Team;

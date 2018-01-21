@@ -11,7 +11,7 @@ import org.dyn4j.geometry.Vector2;
 
 import me.pieking.game.Game;
 import me.pieking.game.net.packet.ShipComponentHealthPacket;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.GameObject.BodyType;
 import me.pieking.game.world.GameObjectFilter.FilterType;
 

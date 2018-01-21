@@ -1,4 +1,4 @@
-package me.pieking.game.ship.component;
+package me.pieking.game.robot.component;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

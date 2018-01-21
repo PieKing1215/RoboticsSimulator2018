@@ -5,7 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 
 import me.pieking.game.Game;
-import me.pieking.game.ship.Ship;
+import me.pieking.game.robot.Robot;
 import me.pieking.game.world.Player;
 
 public class ShipDataPacket extends Packet {
@@ -32,7 +32,7 @@ public class ShipDataPacket extends Packet {
 			System.out.println("makeShip for " + user);
 			
 			try {
-				pl.loadShip(Ship.loadData(data, pl));
+				pl.loadShip(Robot.loadData(data, pl));
 			}catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
 				e.printStackTrace();
 			}

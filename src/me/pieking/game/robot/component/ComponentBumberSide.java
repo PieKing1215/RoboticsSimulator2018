@@ -1,4 +1,4 @@
-package me.pieking.game.ship.component;
+package me.pieking.game.robot.component;
 
 import java.awt.Color;
 
@@ -11,18 +11,25 @@ import me.pieking.game.gfx.Spritesheet;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.Player;
 import me.pieking.game.world.PlayerFilter;
+import me.pieking.game.world.Switch.Team;
 
-public class StructureComponentSquare extends Component {
+public class ComponentBumberSide extends Component {
 
-	public static Sprite spr = Spritesheet.tiles.subTile(1, 5);
+	public static Sprite sprBlue = Spritesheet.tiles.subTile(0, 17);
+	public static Sprite sprRed = Spritesheet.tiles.subTile(0, 18);
 	
-	public StructureComponentSquare(int x, int y, int rot) {
+	public ComponentBumberSide(int x, int y, int rot) {
 		super(x, y, 1, 1, rot, 500);
-		sprite = spr;
+		sprite = sprBlue;
 	}
 	
 	@Override
 	public GameObject createBody(Player player){
+		
+		System.out.println(player.name + " " + player.team);
+		
+		if(player.team == Team.RED) sprite = sprRed;
+		if(player.team == Team.BLUE) sprite = sprBlue;
 		
 		GameObject base = new GameObject();
 		base.setAutoSleepingEnabled(false);
@@ -42,7 +49,7 @@ public class StructureComponentSquare extends Component {
 	
 	@Override
 	public String getDisplayName() {
-		return "Metal Plate";
+		return "Bumper";
 	}
 
 }

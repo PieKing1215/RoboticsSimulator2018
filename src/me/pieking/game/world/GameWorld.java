@@ -29,8 +29,8 @@ import me.pieking.game.Vars;
 import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Images;
 import me.pieking.game.gfx.Sprite;
-import me.pieking.game.ship.Ship;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.Robot;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.Switch.Team;
 
 public class GameWorld {
@@ -40,7 +40,7 @@ public class GameWorld {
 	private static final double LINEAR_DAMPING = 16;
 
 	private static final Sprite field = Images.getSprite("field_temp.png");
-	private static boolean shipAligned = false;
+	private static boolean robotAligned = false;
 
 	public static final float FIELD_SCALE = 1.1f;
 	
@@ -320,7 +320,7 @@ public class GameWorld {
 		g.transform(yFlip);
 		g.transform(move);
 		
-		if(isShipAligned()) g.rotate(-getSelfPlayer().base.getTransform().getRotation(), Game.getWidth()/2, Game.getHeight()/2);
+		if(isRobotAligned()) g.rotate(-getSelfPlayer().base.getTransform().getRotation(), Game.getWidth()/2, Game.getHeight()/2);
 		AffineTransform ofs = AffineTransform.getTranslateInstance(xOffset, yOffset);
 		g.transform(ofs);
 		
@@ -482,7 +482,7 @@ public class GameWorld {
 	 */
 	private void renderHUD(Graphics2D g) {
 		
-		if(Ship.buildMode){
+		if(Robot.buildMode){
 			g.setFont(Fonts.gamer.deriveFont(40f));
 			g.setColor(Color.WHITE);
 			g.drawString("BUILD MODE", 10, 44);
@@ -815,8 +815,8 @@ public class GameWorld {
 	 */
 	public Component getComponent(GameObject go) {
 		for(Player p : players){
-			if(p.ship == null) continue;
-			Component c = p.ship.getComponent(go);
+			if(p.robot == null) continue;
+			Component c = p.robot.getComponent(go);
 			if(c != null) return c;
 		}
 		return null;
@@ -829,7 +829,7 @@ public class GameWorld {
 	 */
 	public void removeComponent(Component comp) {
 		for(Player p : players){
-			Component c = p.ship.getComponent(comp.lastBody);
+			Component c = p.robot.getComponent(comp.lastBody);
 			if(c != null) {
 				p.destroyComponent(c);
 			}
@@ -837,13 +837,13 @@ public class GameWorld {
 	}
 
 	/**
-	 * Returns the {@link Player} whose {@link Ship} contains the specified {@link Component}.
+	 * Returns the {@link Player} whose {@link Robot} contains the specified {@link Component}.
 	 * @param comp - the {@link Component} to search for.
-	 * @return the {@link Player} whose {@link Ship} contains the specified {@link Component}, or <code>null</code> if it could not be found.
+	 * @return the {@link Player} whose {@link Robot} contains the specified {@link Component}, or <code>null</code> if it could not be found.
 	 */
 	public Player getPlayer(Component comp) {
 		for(Player p : players){
-			Component c = p.ship.getComponent(comp.lastBody);
+			Component c = p.robot.getComponent(comp.lastBody);
 			if(c != null) return p;
 		}
 		return null;
@@ -1048,19 +1048,19 @@ public class GameWorld {
 	}
 
 	/** 
-	 * @return <code>true</code> if the renderer is aligned with the player's ship.<br>
+	 * @return <code>true</code> if the renderer is aligned with the player's robot.<br>
 	 * <code>false<code> otherwise.
 	 */
-	public static boolean isShipAligned() {
-		return shipAligned;
+	public static boolean isRobotAligned() {
+		return robotAligned;
 	}
 
 	/**
-	 * Sets whether or not the renderer is aligned with the player's ship.
-	 * @param shipAligned - whether the renderer should be aligned with the player's ship.
+	 * Sets whether or not the renderer is aligned with the player's robot.
+	 * @param robotAligned - whether the renderer should be aligned with the player's robot.
 	 */
-	public static void setShipAligned(boolean shipAligned) {
-		GameWorld.shipAligned = shipAligned;
+	public static void setRobotAligned(boolean robotAligned) {
+		GameWorld.robotAligned = robotAligned;
 	}
 
 	/**

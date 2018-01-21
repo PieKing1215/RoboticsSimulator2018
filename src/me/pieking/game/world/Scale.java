@@ -6,7 +6,7 @@ import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 
 public class Scale extends Switch {
 

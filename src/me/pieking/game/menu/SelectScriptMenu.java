@@ -16,8 +16,8 @@ import java.util.List;
 import me.pieking.game.FileSystem;
 import me.pieking.game.Game;
 import me.pieking.game.gfx.Fonts;
+import me.pieking.game.robot.component.ComputerComponent;
 import me.pieking.game.scripting.LuaTest;
-import me.pieking.game.ship.component.ComputerComponent;
 
 public class SelectScriptMenu extends Menu {
 

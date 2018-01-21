@@ -21,7 +21,7 @@ import org.dyn4j.geometry.Vector2;
 
 import me.pieking.game.gfx.Graphics2DRenderer;
 import me.pieking.game.gfx.Sprite;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 
 public class GameObject extends Body {
 	

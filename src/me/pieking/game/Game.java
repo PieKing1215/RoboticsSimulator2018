@@ -33,8 +33,8 @@ import me.pieking.game.net.packet.JoinPacket;
 import me.pieking.game.net.packet.LeavePacket;
 import me.pieking.game.net.packet.Packet;
 import me.pieking.game.net.packet.ShipDataPacket;
+import me.pieking.game.robot.Robot;
 import me.pieking.game.scripting.LuaTest;
-import me.pieking.game.ship.Ship;
 import me.pieking.game.sound.Sound;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.GameWorld;
@@ -230,7 +230,7 @@ public class Game {
 				Game.doPacket(pack);
 				Game.getWorld().setSelfPlayer(pack.getCreated());
 				
-				Ship s = gw.getSelfPlayer().selectShip();
+				Robot s = gw.getSelfPlayer().selectShip();
 			    
 			    try {
 					ShipDataPacket sdp = new ShipDataPacket(Game.getWorld().getSelfPlayer().name, s.saveDataString());
@@ -242,7 +242,7 @@ public class Game {
 			} else {
 				gw.setSelfPlayer(new Player("Player 1", 900f / GameObject.SCALE * GameWorld.FIELD_SCALE, 500f / GameObject.SCALE * GameWorld.FIELD_SCALE, Team.RED));
 
-				Ship s = gw.getSelfPlayer().selectShip();
+				Robot s = gw.getSelfPlayer().selectShip();
 				gw.getSelfPlayer().loadShip(s);
 				
 				gw.addPlayer(gw.getSelfPlayer());

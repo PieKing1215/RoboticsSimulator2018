@@ -14,7 +14,7 @@ import java.util.List;
 
 import me.pieking.game.Game;
 import me.pieking.game.gfx.Fonts;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.Player;
 
 public class SelectComponentMenu extends Menu {
