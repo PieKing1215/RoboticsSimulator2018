@@ -3,8 +3,8 @@ package me.pieking.game.net.packet;
 import java.awt.Point;
 
 import me.pieking.game.Game;
-import me.pieking.game.ship.component.ActivatableComponent;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.ActivatableComponent;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.Player;
 
 public class ShipRemoveComponentPacket extends Packet {
@@ -28,14 +28,14 @@ public class ShipRemoveComponentPacket extends Packet {
 	public void doAction() {
 		if(Game.getWorld().getPlayer(user) != null){
 			Player pl = Game.getWorld().getPlayer(user);
-			Component c = pl.ship.getComponent(new Point(x, y));
+			Component c = pl.robot.getComponent(new Point(x, y));
 			if(c != null) {
 				
 				if(c instanceof ActivatableComponent){
 					((ActivatableComponent) c).deactivate();
 				}
 				
-				pl.ship.removeComponent(c);
+				pl.robot.removeComponent(c);
 				pl.constructShip();
 			}
 		}

@@ -1,12 +1,10 @@
-package me.pieking.game.ship.component;
+package me.pieking.game.robot.component;
 
 import java.awt.Color;
 
 import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.Mass;
 import org.dyn4j.geometry.MassType;
-import org.dyn4j.geometry.Polygon;
-import org.dyn4j.geometry.Vector2;
 
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.gfx.Spritesheet;
@@ -14,11 +12,11 @@ import me.pieking.game.world.GameObject;
 import me.pieking.game.world.Player;
 import me.pieking.game.world.PlayerFilter;
 
-public class StructureComponentSlope extends Component {
+public class StructureComponentSquare extends Component {
 
-	public static Sprite spr = Spritesheet.tiles.subTile(0, 6);
+	public static Sprite spr = Spritesheet.tiles.subTile(1, 5);
 	
-	public StructureComponentSlope(int x, int y, int rot) {
+	public StructureComponentSquare(int x, int y, int rot) {
 		super(x, y, 1, 1, rot, 500);
 		sprite = spr;
 	}
@@ -29,9 +27,8 @@ public class StructureComponentSlope extends Component {
 		GameObject base = new GameObject();
 		base.setAutoSleepingEnabled(false);
 		base.color = Color.GRAY;
-		Polygon p = new Polygon(new Vector2(0, 0), new Vector2(unitSize, unitSize), new Vector2(0, unitSize));
-		p.translate(-unitSize/2, -unitSize/2);
-		BodyFixture bf = new BodyFixture(p);
+		org.dyn4j.geometry.Rectangle r = new org.dyn4j.geometry.Rectangle(bounds.width * unitSize, bounds.width * unitSize);
+		BodyFixture bf = new BodyFixture(r);
 		bf.setFilter(new PlayerFilter(player));
 		base.addFixture(bf);
 		base.setMass(new Mass(base.getMass().getCenter(), 0, 0));
@@ -42,10 +39,10 @@ public class StructureComponentSlope extends Component {
 		
 		return base;
 	}
-
+	
 	@Override
 	public String getDisplayName() {
-		return "Sloped Metal Plate";
+		return "Metal Plate";
 	}
-	
+
 }

@@ -18,7 +18,7 @@ import me.pieking.game.net.packet.LeavePacket;
 import me.pieking.game.net.packet.Packet;
 import me.pieking.game.net.packet.ShipComponentHealthPacket;
 import me.pieking.game.net.packet.ShipDataPacket;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.Player;
 
 public class ServerStarter {
@@ -103,7 +103,7 @@ public class ServerStarter {
 						try{
     						String decoded = "null";
     						try {
-    							decoded = new String(pl2.ship.saveData(), "ISO-8859-1");
+    							decoded = new String(pl2.robot.saveData(), "ISO-8859-1");
     						}catch (UnsupportedEncodingException e) {
     							e.printStackTrace();
     						}
@@ -112,7 +112,7 @@ public class ServerStarter {
     						writePacket(from, sdp);
     						
     						Scheduler.delayedTask(() -> {
-    							for(Component c : pl2.ship.getComponents()){
+    							for(Component c : pl2.robot.getComponents()){
         							ShipComponentHealthPacket schp = new ShipComponentHealthPacket(pl2.name, c.bounds.x + "", c.bounds.y + "", c.health + "");
         							writePacket(from, schp);
         						}

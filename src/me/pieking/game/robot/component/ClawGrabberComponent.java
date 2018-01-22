@@ -1,4 +1,4 @@
-package me.pieking.game.ship.component;
+package me.pieking.game.robot.component;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -97,7 +97,7 @@ public class ClawGrabberComponent extends ActivatableComponent {
 			
 			boolean coll = false;
 			
-			for(ScalePlatform plat : Game.getWorld().scalePlatforms){
+			for(ScalePlatform plat : Game.getWorld().getScalePlatforms()){
 				AABB ab2 = plat.base.createAABB();
 				ab2.expand(1);
 				if(aabb.getIntersection(ab2).getArea() > 0){

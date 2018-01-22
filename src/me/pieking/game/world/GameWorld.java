@@ -25,87 +25,52 @@ import org.dyn4j.geometry.Vector2;
 import me.pieking.game.Game;
 import me.pieking.game.Rand;
 import me.pieking.game.Scheduler;
+import me.pieking.game.Vars;
 import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Images;
 import me.pieking.game.gfx.Sprite;
-import me.pieking.game.ship.Ship;
-import me.pieking.game.ship.component.Component;
-import me.pieking.game.world.Switch.Team;
+import me.pieking.game.robot.Robot;
+import me.pieking.game.robot.component.Component;
+import me.pieking.game.world.Balance.Team;
 
 public class GameWorld {
-	public static final int BOOST_TIME = 10;
+	public static final int BOOST_TIME = 10; //TODO: move power up properties to their own class
 	
-	public static final double ANGULAR_DAMPING = 50;
-	public static final double LINEAR_DAMPING = 16;
+	private static final double ANGULAR_DAMPING = 50;
+	private static final double LINEAR_DAMPING = 16;
 
-	public static boolean shipAligned = false;
-	
-	public static Sprite field = Images.getSprite("field_temp.png");
+	private static final Sprite field = Images.getSprite("field_temp.png");
+	private static boolean robotAligned = false;
 
-	public World world;
+	public static final float FIELD_SCALE = 1.1f;
 	
-	public double xOffset = 0;
-	public double yOffset = 0;
+	private World world;
 	
-	public List<GameObject> toRemove = new ArrayList<GameObject>();
-	public List<GameObject> walls = new ArrayList<GameObject>();
-	public List<GameObject> particles = new ArrayList<GameObject>();
-	public List<PowerCube> cubes = new ArrayList<PowerCube>();
-	public List<ScalePlatform> scalePlatforms = new ArrayList<ScalePlatform>();
-	public List<Switch> scales = new ArrayList<Switch>();
+	private double xOffset = 0;
+	private double yOffset = 0;
 	
-	public Switch blueSwitch;
-	public Switch redSwitch;
+	private Player selfPlayer;
+	private List<Player> players = new ArrayList<Player>();
 	
-	public GameObject redExchangeSensor;
-	public GameObject blueExchangeSensor;
-	
-	@SuppressWarnings("serial")
-	public HashMap<Team, Integer> cubeStorage = new HashMap<Switch.Team, Integer>(){{
-		put(Team.BLUE, 0);
-		put(Team.RED, 0);
-		put(Team.NONE, 0);
-	}};
-	
-	public Player selfPlayer;
-	public List<Player> players = new ArrayList<Player>();
-
-	@SuppressWarnings("serial")
-	public HashMap<Team, HashMap<Pentalty, Integer>> penalties = new HashMap<Team, HashMap<Pentalty, Integer>>(){{
-		put(Team.BLUE, new HashMap<>());
-		put(Team.RED, new HashMap<>());
-		put(Team.NONE, new HashMap<>());
-	}};
-	
-	public GameWorld(){
-		initializeWorld();
-		world.addListener(new GameListener());
-	}
-	
-	private GameObject floor;
-	private GameObject floor2;
-	private GameObject floor3;
-	private GameObject floor4;
-	
-	public static float FIELD_SCALE = 1.1f;
-	double fieldXofs = 28.1;
-	double fieldYofs = 11;
-	
-	public int blueScoreModSwitch = 1;
-	public int blueScoreModScale = 1;
-	public int redScoreModSwitch = 1;
-	public int redScoreModScale = 1;
-	
-	@SuppressWarnings("serial")
-	public HashMap<Team, Integer> score = new HashMap<Team, Integer>(){{
-		put(Team.BLUE, 0);
-		put(Team.RED, 0);
-		put(Team.NONE, 0);
-	}};
-	
+	private List<GameObject> toRemove = new ArrayList<GameObject>();
+	private List<GameObject> walls = new ArrayList<GameObject>();
+	private List<GameObject> particles = new ArrayList<GameObject>();
+	private List<PowerCube> cubes = new ArrayList<PowerCube>();
+	private List<PowerCube> exchanging = new ArrayList<PowerCube>();
+	private List<ScalePlatform> scalePlatforms = new ArrayList<ScalePlatform>();
+	private List<Balance> scales = new ArrayList<Balance>();
 	private Scale scale;
 	
-	public static Vector2 mouseWorldPos = new Vector2();
+	private double fieldXofs = 28.1;
+	private double fieldYofs = 11;
+
+	private int gameTime = ((2 * 60) + 30) * 60;
+	
+	private HashMap<Team, TeamProperties> teamProperties = new HashMap<Balance.Team, TeamProperties>();
+	
+	private static Vector2 mouseWorldPos = new Vector2();
+	
+	//TODO: move power up properties to their own class
 	
 	public Team power_boost = Team.NONE;
 	public Team power_boost_queued = Team.NONE;
@@ -123,54 +88,42 @@ public class GameWorld {
 	public int power_force_level_red = 0;
 	public int power_force_level_blue = 0;
 	
-	public List<Team> power_levitate_used = new ArrayList<>();
+	public GameWorld(){
+		initializeWorld();
+		getWorld().addListener(new GameListener());
+	}
 	
-	public int gameTime = ((2 * 60) + 30) * 60;
-
-	private List<PowerCube> beingDeleted = new ArrayList<PowerCube>();
-	
+	/**
+	 * Initializes the world.<br>
+	 * Specifically, this method:
+	 * <p><ul>
+	 * <li>Creates and sets properties of {@link #world}.
+	 * <li>Creates and adds field collision.
+	 * <li>Creates and adds the exchange sensors.
+	 * <li>Creates and adds the {@link #scale} and switches.
+	 * <li>Creates and adds {@link PowerCube}s.
+	 * <li>Initializes {@link #teamProperties}.
+	 * </ul></p>
+	 */
 	public void initializeWorld() {
-		// create the world
 		this.world = new World();
-		// create all your bodies/joints
-		world.setGravity(new Vector2(0, 0));
-		//world.setGravity(new Vector2(0, 0));
+		getWorld().setGravity(new Vector2(0, 0));
 		
-//		for(int i = 0; i < 20; i++){
-//			Planet p;
-//			
-//			int size = 2;
-//			if(i == 0){
-//				p = new Planet(200 * size, world, 0, 130, Atmosphere.OXYGEN);
-//			}else{
-//				
-//				p = new Planet(Rand.range(50 * size, 300 * size), world, ((i % 5) * 2000 * size) + Rand.range(-500 * size, 500 * size), ((i / 5) * 2000 * size) + Rand.range(-500 * size, 500 * size));
-//				p.atm = Atmosphere.values()[Rand.range(0, Atmosphere.values().length-1)];
-//			}
-//
-//			if(i == 0){
-//				homePlanet = p;
-//			}
-//			planets.add(p);
-//		}
-		//planets.add(new Planet(100, world, 400, 400));
-		//planets.add(new Planet(300, world, -600, -700));
-		
-		// create the floor
-		
-		floor = new GameObject();
+		// top
+		GameObject floor = new GameObject();
 		floor.color = new Color(0f, 0.5f, 0f, 1f);
-		double w = (field.getWidth() * GameObject.SCALE * 0.05) / GameObject.SCALE * FIELD_SCALE;
-		double h = (field.getHeight() * GameObject.SCALE * 0.05) / GameObject.SCALE * FIELD_SCALE;
+		double w = (getFieldImage().getWidth() * GameObject.SCALE * 0.05) / GameObject.SCALE * FIELD_SCALE;
+		double h = (getFieldImage().getHeight() * GameObject.SCALE * 0.05) / GameObject.SCALE * FIELD_SCALE;
 		Rectangle floorRect = new Rectangle(w, 40 / GameObject.SCALE * FIELD_SCALE);
 		floorRect.translate(w/2, Component.unitSize * 2 * FIELD_SCALE);
 		BodyFixture f1 = new BodyFixture(floorRect);
 		f1.setDensity(0.5f);
 		floor.addFixture(f1);
 		
-		world.addBody(floor);
+		getWorld().addBody(floor);
 		
-		floor2 = new GameObject();
+		// bottom
+		GameObject floor2 = new GameObject();
 		floor2.color = new Color(0f, 0.5f, 0f, 1f);
 		Rectangle floor2Rect = new Rectangle(w, 40 / GameObject.SCALE * FIELD_SCALE);
 		floor2Rect.translate(w/2, h - Component.unitSize * 2 * FIELD_SCALE);
@@ -178,19 +131,21 @@ public class GameWorld {
 		f2.setDensity(0.5f);
 		floor2.addFixture(f2);
 		
-		world.addBody(floor2);
+		getWorld().addBody(floor2);
 		
 		double holePos = 0.5;
 		
-		floor3 = new GameObject();
+		// left top
+		GameObject floor3 = new GameObject();
 		floor3.color = new Color(0f, 0.5f, 0f, 1f);
 		Rectangle floor3Rect = new Rectangle(40 / GameObject.SCALE * FIELD_SCALE, h * holePos);
 		floor3Rect.translate(Component.unitSize * 16 * FIELD_SCALE, (h * 0.3)/2);
 		BodyFixture f3 = new BodyFixture(floor3Rect);
 		f3.setDensity(0.5f);
 		floor3.addFixture(f3);
-		world.addBody(floor3);
+		getWorld().addBody(floor3);
 		
+		// left bottom
 		GameObject floor3B = new GameObject();
 		floor3B.color = new Color(0f, 0.5f, 0f, 1f);
 		Rectangle floor3BRect = new Rectangle(40 / GameObject.SCALE * FIELD_SCALE, h * holePos);
@@ -198,10 +153,11 @@ public class GameWorld {
 		BodyFixture f3b = new BodyFixture(floor3BRect);
 		f3b.setDensity(0.5f);
 		floor3B.addFixture(f3b);
-		world.addBody(floor3B);
+		getWorld().addBody(floor3B);
 		walls.add(floor3B);
 		
-		redExchangeSensor = new GameObject();
+		// left exchange
+		GameObject redExchangeSensor = new GameObject();
 		redExchangeSensor.color = new Color(0.5f, 0.2f, 0.2f, 0.5f);
 		Rectangle redExchangeSensorRect = new Rectangle(Component.unitSize * 5 * FIELD_SCALE, Component.unitSize * 5 * FIELD_SCALE);
 		redExchangeSensorRect.translate(Component.unitSize * 13.5 * FIELD_SCALE, (h * 0.3)/2 + (h * holePos)/2);
@@ -209,15 +165,56 @@ public class GameWorld {
 		res.setSensor(true);
 		res.setDensity(0.5f);
 		redExchangeSensor.addFixture(res);
-		world.addBody(redExchangeSensor);
+		getWorld().addBody(redExchangeSensor);
 		walls.add(redExchangeSensor);
+		
+		double holePos2 = 0.82;
+		
+		// right top
+		GameObject floor4 = new GameObject();
+		floor4.color = new Color(0f, 0.5f, 0f, 1f);
+		Rectangle floor4Rect = new Rectangle(40 / GameObject.SCALE * FIELD_SCALE, h * holePos2);
+		floor4Rect.translate(w - Component.unitSize * 16.5 * FIELD_SCALE, (h * 0.3)/2);
+		BodyFixture f4 = new BodyFixture(floor4Rect);
+		f4.setDensity(0.5f);
+		floor4.addFixture(f4);
+		getWorld().addBody(floor4);
+		
+		// right bottom
+		GameObject floor4B = new GameObject();
+		floor4B.color = new Color(0f, 0.5f, 0f, 1f);
+		Rectangle floor4BRect = new Rectangle(40 / GameObject.SCALE * FIELD_SCALE, h * holePos2);
+		floor4BRect.translate(w - Component.unitSize * 16.5 * FIELD_SCALE, (h * 0.3)/2 +  h * holePos2 + (PowerCube.SIZE * 1.2));
+		BodyFixture f4b = new BodyFixture(floor4BRect);
+		f4b.setDensity(0.5f);
+		floor4B.addFixture(f4b);
+		getWorld().addBody(floor4B);
+		walls.add(floor4B);
+		
+		
+		// right exchange
+		GameObject blueExchangeSensor = new GameObject();
+		blueExchangeSensor.color = new Color(0.2f, 0.2f, 0.5f, 0.5f);
+		Rectangle blueExchangeSensorRect = new Rectangle(Component.unitSize * 5 * FIELD_SCALE, Component.unitSize * 5 * FIELD_SCALE);
+		blueExchangeSensorRect.translate(w - Component.unitSize * 14 * FIELD_SCALE, (h * 0.3)/2 + (h * holePos2)/2);
+		BodyFixture bes = new BodyFixture(blueExchangeSensorRect);
+		bes.setSensor(true);
+		bes.setDensity(0.5f);
+		blueExchangeSensor.addFixture(bes);
+		getWorld().addBody(blueExchangeSensor);
+		walls.add(blueExchangeSensor);
+		
+		walls.add(floor);
+		walls.add(floor2);
+		walls.add(floor3);
+		walls.add(floor4);
 		
 		GameObject slopeUL = new GameObject();
 		Triangle t1 = new Triangle(new Vector2(-1 * FIELD_SCALE, -1 * FIELD_SCALE), new Vector2(3 * FIELD_SCALE, -1 * FIELD_SCALE), new Vector2(-1 * FIELD_SCALE, 2 * FIELD_SCALE));
 		t1.translate(Component.unitSize * 16 * FIELD_SCALE + (40 / GameObject.SCALE * FIELD_SCALE), 40 / GameObject.SCALE * FIELD_SCALE + (Component.unitSize * 2 * FIELD_SCALE));
 		BodyFixture tbf1 = new BodyFixture(t1);
 		slopeUL.addFixture(tbf1);
-		world.addBody(slopeUL);
+		getWorld().addBody(slopeUL);
 		walls.add(slopeUL);
 		
 		GameObject slopeBL = new GameObject();
@@ -225,7 +222,7 @@ public class GameWorld {
 		t2.translate((Component.unitSize * 16 * FIELD_SCALE + (40 / GameObject.SCALE * FIELD_SCALE)), h - (40 / GameObject.SCALE * FIELD_SCALE + (Component.unitSize * 2 * FIELD_SCALE)) + (2 * FIELD_SCALE));
 		BodyFixture tbf2 = new BodyFixture(t2);
 		slopeBL.addFixture(tbf2);
-		world.addBody(slopeBL);
+		getWorld().addBody(slopeBL);
 		walls.add(slopeBL);
 		
 		GameObject slopeUR = new GameObject();
@@ -234,7 +231,7 @@ public class GameWorld {
 		t3.translate(w * 0.669, 0);
 		BodyFixture tbf3 = new BodyFixture(t3);
 		slopeUR.addFixture(tbf3);
-		world.addBody(slopeUR);
+		getWorld().addBody(slopeUR);
 		walls.add(slopeUR);
 		
 		GameObject slopeBR = new GameObject();
@@ -243,68 +240,15 @@ public class GameWorld {
 		t4.translate(w * 0.669, 0);
 		BodyFixture tbf4 = new BodyFixture(t4);
 		slopeBR.addFixture(tbf4);
-		world.addBody(slopeBR);
+		getWorld().addBody(slopeBR);
 		walls.add(slopeBR);
-		
-		double holePos2 = 0.82;
-		
-		floor4 = new GameObject();
-		floor4.color = new Color(0f, 0.5f, 0f, 1f);
-		Rectangle floor4Rect = new Rectangle(40 / GameObject.SCALE * FIELD_SCALE, h * holePos2);
-		floor4Rect.translate(w - Component.unitSize * 16.5 * FIELD_SCALE, (h * 0.3)/2);
-		BodyFixture f4 = new BodyFixture(floor4Rect);
-		f4.setDensity(0.5f);
-		floor4.addFixture(f4);
-		world.addBody(floor4);
-		
-		GameObject floor4B = new GameObject();
-		floor4B.color = new Color(0f, 0.5f, 0f, 1f);
-		Rectangle floor4BRect = new Rectangle(40 / GameObject.SCALE * FIELD_SCALE, h * holePos2);
-		floor4BRect.translate(w - Component.unitSize * 16.5 * FIELD_SCALE, (h * 0.3)/2 +  h * holePos2 + (PowerCube.SIZE * 1.2));
-		BodyFixture f4b = new BodyFixture(floor4BRect);
-		f4b.setDensity(0.5f);
-		floor4B.addFixture(f4b);
-		world.addBody(floor4B);
-		walls.add(floor4B);
-		
-		blueExchangeSensor = new GameObject();
-		blueExchangeSensor.color = new Color(0.2f, 0.2f, 0.5f, 0.5f);
-		Rectangle blueExchangeSensorRect = new Rectangle(Component.unitSize * 5 * FIELD_SCALE, Component.unitSize * 5 * FIELD_SCALE);
-		blueExchangeSensorRect.translate(w - Component.unitSize * 14 * FIELD_SCALE, (h * 0.3)/2 + (h * holePos2)/2);
-		BodyFixture bes = new BodyFixture(blueExchangeSensorRect);
-		bes.setSensor(true);
-		bes.setDensity(0.5f);
-		blueExchangeSensor.addFixture(bes);
-		world.addBody(blueExchangeSensor);
-		walls.add(blueExchangeSensor);
-		
-		walls.add(floor);
-		walls.add(floor2);
-		walls.add(floor3);
-		walls.add(floor4);
-		
-		
-//		addPowerCube(new PowerCube(0 + fieldXofs, 0 + fieldYofs, 0));
+
+		// place power cubes on the field
 		
 		for(int i = 0; i < 6; i++){
 			addPowerCube(new PowerCube(-6.8 + fieldXofs, ((i-2) * 1.825) + fieldYofs - 0.15, 0));
 			addPowerCube(new PowerCube(9.0 + fieldXofs, ((i-2) * 1.825) + fieldYofs - 0.15, 0));
 		}
-		
-//		addPowerCube(new PowerCube(5 + fieldXofs, 0 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(5 + fieldXofs, 1 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(5 + fieldXofs, 2 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(5 + fieldXofs, -1 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(5 + fieldXofs, -2 + fieldYofs, 0));
-		
-//		addPowerCube(new PowerCube(-5 + fieldXofs, 0 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(-5 + fieldXofs, 1 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(-5 + fieldXofs, 2 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(-5 + fieldXofs, -1 + fieldYofs, 0));
-//		addPowerCube(new PowerCube(-5 + fieldXofs, -2 + fieldYofs, 0));
-		
-		
-		// actual
 		
 		addPowerCube(new PowerCube(-13 + fieldXofs, 0.79 + fieldYofs, 0));
 		addPowerCube(new PowerCube(-13 + PowerCube.SIZE + fieldXofs, 0.79 - PowerCube.SIZE/2 + fieldYofs, 0));
@@ -320,255 +264,28 @@ public class GameWorld {
 		addPowerCube(new PowerCube(15.3 - PowerCube.SIZE - PowerCube.SIZE + fieldXofs, 0.79 + PowerCube.SIZE/2 - PowerCube.SIZE/2 + fieldYofs, 0));
 		addPowerCube(new PowerCube(15.3 - PowerCube.SIZE - PowerCube.SIZE + fieldXofs, 0.79 - PowerCube.SIZE/2 - PowerCube.SIZE/2 + fieldYofs, 0));
 		
+		// create the switches with a random one of the possible orientations
+		
 		boolean[] switchOrientation = getRandomSwitchOrientation();
 		
-		blueSwitch = new Switch(10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[0]);
+		Switch blueSwitch = new Switch(10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[0]);
 		addScale(blueSwitch);
 		scale = new Scale(0.07 + fieldXofs, 0 + fieldYofs, switchOrientation[1]);
 		addScale(scale);
-		redSwitch = new Switch(-10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[2]);
+		Switch redSwitch = new Switch(-10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[2]);
 		addScale(redSwitch);
+
+		teamProperties.put(Team.RED, new TeamProperties(redSwitch, redExchangeSensor));
+		teamProperties.put(Team.BLUE, new TeamProperties(blueSwitch, blueExchangeSensor));
 		
-//		GameObject go = new GameObject();
-		
-//		Rectangle r = new Rectangle(Component.unitSize * 2, Component.unitSize / 8);
-//		r.translate(Component.unitSize/2, Component.unitSize/2);
-//		BodyFixture bf = new BodyFixture(r);
-//		bf.setFilter(new PlayerFilter(selfPlayer));
-//		go.addFixture(bf);
-//		
-//		r = new Rectangle(Component.unitSize / 8, Component.unitSize * .75);
-//		r.translate(-Component.unitSize/2, Component.unitSize / 8);
-//		bf = new BodyFixture(r);
-//		bf.setFilter(new PlayerFilter(selfPlayer));
-//		go.addFixture(bf);
-//		
-//		r = new Rectangle(Component.unitSize / 8, Component.unitSize * .75);
-//		r.translate(Component.unitSize/2 + Component.unitSize, Component.unitSize / 8);
-//		bf = new BodyFixture(r);
-//		bf.setFilter(new PlayerFilter(selfPlayer));
-//		go.addFixture(bf);
-//		
-//		go.translate(19.5, 12);
-//		
-//		go.setMass(MassType.NORMAL);
-//		go.applyForce(new Vector2(0, -80));
-//		world.addBody(go);
-//		particles.add(go);
-		
-//		GameObject floor2 = new GameObject();
-//		floor2.color = Color.GRAY;
-//		
-//		Rectangle floorRect2 = new Rectangle(150 / GameObject.SCALE, 100 / GameObject.SCALE);
-//		floorRect2.translate(75 / GameObject.SCALE, (Game.getHeight() - 50 - 40) / GameObject.SCALE);
-//		BodyFixture f2 = new BodyFixture(floorRect2);
-//		f2.setDensity(0.5f);
-//		floor2.addFixture(f2);
-//		
-//		world.addBody(floor2);
-//		
-//		
-//		GameObject floor3 = new GameObject();
-//		floor3.color = Color.GRAY;
-//		
-//		Rectangle floorRect3 = new Rectangle(300 / GameObject.SCALE, 100 / GameObject.SCALE);
-//		floorRect3.translate((Game.getWidth() - 150 + (150)) / GameObject.SCALE, (Game.getHeight() - 50 - 40) / GameObject.SCALE);
-//		BodyFixture f3 = new BodyFixture(floorRect3);
-//		f3.setDensity(0.5f);
-//		floor3.addFixture(f3);
-//		
-//		world.addBody(floor3);
-		
-		
-//		for(int i = 0; i < 6; i++){
-//			GameObject block = new GameObject();
-//			block.color = Color.DARK_GRAY;
-//			
-//			Rectangle blockRect = new Rectangle(30 / GameObject.SCALE, 30 / GameObject.SCALE);
-//			blockRect.translate((660 + (5 * i)) / GameObject.SCALE, (Game.getHeight() - 50 - 40 - 200 - (5 * i)) / GameObject.SCALE);
-//			BodyFixture fx = new BodyFixture(blockRect);
-//			fx.setDensity(0.5f);
-//			block.addFixture(fx);
-//			block.setMass(MassType.NORMAL);
-//			block.magnetable = true;
-//			block.magneticLevel = 0.5f;
-//			world.addBody(block);
-//		}
-		
-//		Rectangle floorRect2 = new Rectangle(20 / GameObject.SCALE, 300 / GameObject.SCALE);
-//		BodyFixture f2 = new BodyFixture(floorRect2);
-//		f2.setDensity(0.5f);
-//		floor.addFixture(f2);
-//		floorRect2.translate(-250 / GameObject.SCALE, -150 / GameObject.SCALE);
-//		
-//		Rectangle floorRect3 = new Rectangle(20 / GameObject.SCALE, 300 / GameObject.SCALE);
-//		BodyFixture f3 = new BodyFixture(floorRect3);
-//		f3.setDensity(0.5f);
-//		floor.addFixture(f3);
-//		floorRect3.translate(250 / GameObject.SCALE, -150 / GameObject.SCALE);
-//		
-//		floor.setMass(MassType.INFINITE);
-//		// move the floor down a bit
-//		//floor.translate(0.0, -4.0);
-//		floor.translate(300 / GameObject.SCALE, 400 / GameObject.SCALE);
-//		this.world.addBody(floor);
-//		
-//		
-//		GameObject water = new GameObject();
-//		water.color = new Color(0.2f, 0.2f, 1f, 0.5f);
-//		
-//		Rectangle waterR = new Rectangle(500 / GameObject.SCALE, 200 / GameObject.SCALE);
-//		BodyFixture fx = new BodyFixture(waterR);
-//		fx.setSensor(true);
-//		water.addFixture(fx);
-//		//water.translate(0, -100 / GameObject.SCALE);
-//		waterR.translate(300 / GameObject.SCALE, 300 / GameObject.SCALE);
-//		waterR.translate(0, 0 / GameObject.SCALE);
-//		water.setMass(MassType.INFINITE);
-//		this.world.addBody(water);
-//		this.water = water;
-//		// create a triangle object
-//		Triangle triShape = new Triangle(
-//				new Vector2(0.0, 0.5), 
-//				new Vector2(-0.5, -0.5), 
-//				new Vector2(0.5, -0.5));
-//		GameObject triangle = new GameObject();
-//		triangle.addFixture(triShape);
-//		triangle.setMass(MassType.NORMAL);
-//		triangle.translate(-1.0, 2.0);
-//		// test having a velocity
-//		triangle.getLinearVelocity().set(5.0, 0.0);
-//		this.world.addBody(triangle);
-		
-//		for(int i = 0; i < 0; i++){
-//			GameObject r1 = new GameObject();
-//			BodyFixture fixture = new BodyFixture(new Circle(2 / GameObject.SCALE));
-//			fixture.setDensity(0.1f + (0.01f * i));
-//			r1.addFixture(fixture);
-//			fixture.setRestitution(0);
-//			
-//			r1.setMass(MassType.NORMAL);
-//			r1.translate((100 + ((i%100) * 2)) / GameObject.SCALE, (300 - ((i/100)*10)) / GameObject.SCALE);
-//			r1.color = Color.CYAN;
-//			this.world.addBody(r1);
-//		}
-		
-//		for(int i = 0; i < 0; i++){
-//		//GameObject r1 = createRacecarFixture();
-//			GameObject r1 = new GameObject();
-//			r1.desiredRotation = 90f;
-//			BodyFixture fixture = new BodyFixture(new Rectangle(Rand.range(10, 60) / GameObject.SCALE, Rand.range(10, 60) / GameObject.SCALE));
-//			fixture.setDensity(0.5f);
-//			r1.addFixture(fixture);
-//			fixture.setRestitution(0.5d);
-//			
-//			r1.setMass(MassType.NORMAL);
-//			r1.translate(400 / GameObject.SCALE, 300 / GameObject.SCALE);
-//			//System.out.println(r1 + " " + r1.desiredRotation);
-//			r1.desiredRotation = Rand.range(0f, 360f);
-//			this.world.addBody(r1);
-//		}
-		
-//		GameObject obj = createBoatObject();
-//		obj.translate(300 / GameObject.SCALE, 100 / GameObject.SCALE);
-//		world.addBody(obj);
-		
-		/*
-		GameObject r2 = new GameObject();
-		BodyFixture fixture2 = new BodyFixture(new Rectangle(200 / GameObject.SCALE, 50 / GameObject.SCALE));
-		fixture2.setDensity(1f);
-		r2.addFixture(fixture2);
-		fixture2.setRestitution(0.5d);
-		
-		r2.setMass(MassType.NORMAL);
-		r2.translate(200 / GameObject.SCALE, 300 / GameObject.SCALE);
-		r2.desiredRotation = 10f;
-		
-		this.world.addBody(r2);*/
-		
-		//r1.applyForce(new Vector2(-100, 100));
-		//r1.applyTorque(1d);
-//		// create a circle
-//		Circle cirShape = new Circle(0.5);
-//		GameObject circle = new GameObject();
-//		circle.addFixture(cirShape);
-//		circle.setMass(MassType.NORMAL);
-//		circle.translate(2.0, 2.0);
-//		// test adding some force
-//		circle.applyForce(new Vector2(-100.0, 0.0));
-//		// set some linear damping to simulate rolling friction
-//		circle.setLinearDamping(0.05);
-//		this.world.addBody(circle);
-//		
-//		// try a rectangle
-//		Rectangle rectShape = new Rectangle(1.0, 1.0);
-//		GameObject rectangle = new GameObject();
-//		rectangle.addFixture(rectShape);
-//		rectangle.setMass(MassType.NORMAL);
-//		rectangle.translate(0.0, 2.0);
-//		rectangle.getLinearVelocity().set(-5.0, 0.0);
-//		this.world.addBody(rectangle);
-//		
-//		// try a polygon with lots of vertices
-//		Polygon polyShape = Geometry.createUnitCirclePolygon(10, 1.0);
-//		GameObject polygon = new GameObject();
-//		polygon.addFixture(polyShape);
-//		polygon.setMass(MassType.NORMAL);
-//		polygon.translate(-2.5, 2.0);
-//		// set the angular velocity
-//		polygon.setAngularVelocity(Math.toRadians(-20.0));
-//		this.world.addBody(polygon);
-//		
-//		// try a compound object
-//		Circle c1 = new Circle(0.5);
-//		BodyFixture c1Fixture = new BodyFixture(c1);
-//		c1Fixture.setDensity(0.5);
-//		Circle c2 = new Circle(0.5);
-//		BodyFixture c2Fixture = new BodyFixture(c2);
-//		c2Fixture.setDensity(0.5);
-//		Rectangle rm = new Rectangle(2.0, 1.0);
-//		// translate the circles in local coordinates
-//		c1.translate(-1.0, 0.0);
-//		c2.translate(1.0, 0.0);
-//		GameObject capsule = new GameObject();
-//		capsule.addFixture(c1Fixture);
-//		capsule.addFixture(c2Fixture);
-//		capsule.addFixture(rm);
-//		capsule.setMass(MassType.NORMAL);
-//		capsule.translate(0.0, 4.0);
-//		this.world.addBody(capsule);
-//		
-//		GameObject issTri = new GameObject();
-//		issTri.addFixture(Geometry.createIsoscelesTriangle(1.0, 3.0));
-//		issTri.setMass(MassType.NORMAL);
-//		issTri.translate(2.0, 3.0);
-//		this.world.addBody(issTri);
-//		
-//		GameObject equTri = new GameObject();
-//		equTri.addFixture(Geometry.createEquilateralTriangle(2.0));
-//		equTri.setMass(MassType.NORMAL);
-//		equTri.translate(3.0, 3.0);
-//		this.world.addBody(equTri);
-//		
-//		GameObject rightTri = new GameObject();
-//		rightTri.addFixture(Geometry.createRightTriangle(2.0, 1.0));
-//		rightTri.setMass(MassType.NORMAL);
-//		rightTri.translate(4.0, 3.0);
-//		this.world.addBody(rightTri);
-//		
-//		GameObject cap = new GameObject();
-//		cap.addFixture(new Capsule(1.0, 0.5));
-//		cap.setMass(MassType.NORMAL);
-//		cap.translate(-3.0, 3.0);
-//		this.world.addBody(cap);
-//		
-//		GameObject slice = new GameObject();
-//		slice.addFixture(new Slice(0.5, Math.toRadians(120)));
-//		slice.setMass(MassType.NORMAL);
-//		slice.translate(-3.0, 3.0);
-//		this.world.addBody(slice);
-}
+	}
 	
+	/**
+	 * Returns a boolean array of length 3, representing the upper team color for the switches and scales.<br>
+	 * The orientation is picked randomly from the list of possible orientations as per the manual.
+	 * @return a boolean array of length 3, representing the upper team color for the red switch, scale, and blue switch (in that order),
+	 * where <code>true</code> is blue and <code>false</code> is red.<br>
+	 */
 	private boolean[] getRandomSwitchOrientation() {
 		
 		List<boolean[]> poss = new ArrayList<boolean[]>();
@@ -580,14 +297,22 @@ public class GameWorld {
 		return poss.get(Rand.range(0, poss.size()-1));
 	}
 
+	/**
+	 * Adds a {@link Player} to the world.
+	 * @param pl - the {@link Player} to add.
+	 */
 	public void addPlayer(Player pl) {
 		players.add(pl);
-		world.addBody(pl.base);
+		getWorld().addBody(pl.base);
 	}
 
+	/**
+	 * Renders the world (including the field base, {@link PowerCube PowerCubes}, {@link Balance Switches}, {@link Scale Scales}, {@link Player Players}, etc.).<br>
+	 * Also {@link #renderHUD(Graphics2D) renders the HUD}.
+	 * @param g - the {@link Graphics2D} object to render onto.
+	 */
 	public void render(Graphics2D g){
 		
-		//System.out.println("r3");
 		AffineTransform ot = g.getTransform();
 		
 		AffineTransform yFlip = AffineTransform.getScaleInstance(1, 1);
@@ -595,42 +320,30 @@ public class GameWorld {
 		g.transform(yFlip);
 		g.transform(move);
 		
-		if(shipAligned) g.rotate(-getSelf().base.getTransform().getRotation(), Game.getWidth()/2, Game.getHeight()/2);
+		if(isRobotAligned()) g.rotate(-getSelfPlayer().base.getTransform().getRotation(), Game.getWidth()/2, Game.getHeight()/2);
 		AffineTransform ofs = AffineTransform.getTranslateInstance(xOffset, yOffset);
 		g.transform(ofs);
-
+		
+		
+		
+		g.drawImage(getFieldImage().getImage(), 0, 0, (int)(getFieldImage().getWidth() * GameObject.SCALE * 0.05 * FIELD_SCALE), (int)(getFieldImage().getHeight() * GameObject.SCALE * 0.05 * FIELD_SCALE), null);
+		
+		// render the things!!!
+		// each list is cached before iteration to avoid ConcurrentModificationExceptions
 		
 		List<Body> bodies = new ArrayList<Body>();
-		bodies.addAll(world.getBodies());
-		
+		bodies.addAll(getWorld().getBodies());
 		for(Body b : bodies){
 			GameObject o = (GameObject) b;
-			
-//			if(Game.game.input.leftMouse && o.pullable){
-//				if(o.getMass().getType() == MassType.NORMAL){
-//					Point frameloc = Game.game.frame.getLocation();
-//					frameloc.x += Game.game.frame.getInsets().right;
-//					frameloc.y += Game.game.frame.getInsets().top;
-//					float width = 20 - ((float) new Point((int)(o.getWorldCenter().x * GameObject.SCALE), (int)(o.getWorldCenter().y * GameObject.SCALE)).distance(new Point2D.Float(MouseInfo.getPointerInfo().getLocation().x - frameloc.x, MouseInfo.getPointerInfo().getLocation().y - frameloc.y)) / 10f);
-//					
-//					if(width < 1) width = 1;
-//					
-//					g.setColor(o.color.darker());
-//					g.setStroke(new BasicStroke(width));
-//					g.drawLine((int)(o.getWorldCenter().x * GameObject.SCALE), (int)(o.getWorldCenter().y * GameObject.SCALE), (int)(MouseInfo.getPointerInfo().getLocation().x - frameloc.x - xOffset), (int) (MouseInfo.getPointerInfo().getLocation().y - frameloc.y - yOffset));
-//					g.setStroke(new BasicStroke(1f));
-//				}
-//			}
-//			o.render(g);
-			
+			if(Vars.showCollision) o.render(g);
 		}
-		
-		g.drawImage(field.getImage(), 0, 0, (int)(field.getWidth() * GameObject.SCALE * 0.05 * FIELD_SCALE), (int)(field.getHeight() * GameObject.SCALE * 0.05 * FIELD_SCALE), null);
-		
-		List<GameObject> wal = new ArrayList<GameObject>();
-		wal.addAll(walls);
-		for(GameObject o : wal){
-			o.render(g);
+
+		if(Vars.showCollision){
+    		List<GameObject> wal = new ArrayList<GameObject>();
+    		wal.addAll(walls);
+    		for(GameObject o : wal){
+    			o.render(g);
+    		}
 		}
 		
 		List<GameObject> par = new ArrayList<GameObject>();
@@ -639,10 +352,9 @@ public class GameWorld {
 			o.render(g);
 		}
 		
-		List<Switch> sca = new ArrayList<Switch>();
+		List<Balance> sca = new ArrayList<Balance>();
 		sca.addAll(scales);
-//		System.out.println(scales + " " + sca);
-		for(Switch o : sca){
+		for(Balance o : sca){
 			if(o != null) o.render(g);
 		}
 		
@@ -658,21 +370,22 @@ public class GameWorld {
 			if(p != null) p.render(g);
 		}
 		
-//		if(Game.game.input.rightMouse){
-//			Point frameloc = Game.game.frame.getLocation();
-//			frameloc.x += Game.game.frame.getInsets().right;
-//			frameloc.y += Game.game.frame.getInsets().top;
-//			g.drawLine(Game.game.input.rStart.x - frameloc.x, Game.game.input.rStart.y - frameloc.y, MouseInfo.getPointerInfo().getLocation().x - frameloc.x, MouseInfo.getPointerInfo().getLocation().y - frameloc.y);
-//		}
-		
-		g.setColor(Color.GREEN);
-		g.drawRect(0, 0, 10, 10);
+		if(Vars.showCollision){
+    		g.setColor(Color.GREEN);
+    		g.drawRect(-5, -5, 10, 10);
+		}
 		
 		g.setTransform(ot);
 		
 		renderHUD(g);
 	}
 	
+	/**
+	 * Same as {@link #render(Graphics2D)}, but can be scaled and offset.
+	 * @param scale - the scale to render at (default is {@link GameObject#SCALE})
+	 * @see #render(Graphics2D)
+	 */
+	//TODO: make this method call render(Graphics2D) instead of copy-pasting it
 	public void render(Graphics2D g, double xOffset2, double yOffset2, double scale){
 		
 		double realScale = GameObject.SCALE;
@@ -689,10 +402,25 @@ public class GameWorld {
 		AffineTransform ofs = AffineTransform.getTranslateInstance(xOffset2, yOffset2);
 		g.transform(ofs);
 		
-		List<Body> bodies = new ArrayList<Body>();
-		bodies.addAll(world.getBodies());
+		g.drawImage(getFieldImage().getImage(), 0, 0, (int)(getFieldImage().getWidth() * GameObject.SCALE * 0.05 * FIELD_SCALE), (int)(getFieldImage().getHeight() * GameObject.SCALE * 0.05 * FIELD_SCALE), null);
 		
-		floor.render(g);
+		// render the things!!!
+		// each list is cached before iteration to avoid ConcurrentModificationExceptions
+		
+		List<Body> bodies = new ArrayList<Body>();
+		bodies.addAll(getWorld().getBodies());
+		for(Body b : bodies){
+			GameObject o = (GameObject) b;
+			if(Vars.showCollision) o.render(g);
+		}
+
+		if(Vars.showCollision){
+    		List<GameObject> wal = new ArrayList<GameObject>();
+    		wal.addAll(walls);
+    		for(GameObject o : wal){
+    			o.render(g);
+    		}
+		}
 		
 		List<GameObject> par = new ArrayList<GameObject>();
 		par.addAll(particles);
@@ -700,34 +428,28 @@ public class GameWorld {
 			o.render(g);
 		}
 		
+		List<Balance> sca = new ArrayList<Balance>();
+		sca.addAll(scales);
+		for(Balance o : sca){
+			if(o != null) o.render(g);
+		}
+		
 		List<PowerCube> cub = new ArrayList<PowerCube>();
 		cub.addAll(cubes);
 		for(PowerCube o : cub){
-			if(o != null) o.base.render(g);
-		}
-		
-		List<Switch> sca = new ArrayList<Switch>();
-		sca.addAll(scales);
-//		System.out.println(scales + " " + sca);
-		for(Switch o : sca){
 			if(o != null) o.render(g);
 		}
 		
 		List<Player> pl = new ArrayList<Player>();
 		pl.addAll(players);
 		for(Player p : pl){
-			if(p != null) p.ship.render(g);
+			if(p != null) p.render(g);
 		}
 		
-//		if(Game.game.input.rightMouse){
-//			Point frameloc = Game.game.frame.getLocation();
-//			frameloc.x += Game.game.frame.getInsets().right;
-//			frameloc.y += Game.game.frame.getInsets().top;
-//			g.drawLine(Game.game.input.rStart.x - frameloc.x, Game.game.input.rStart.y - frameloc.y, MouseInfo.getPointerInfo().getLocation().x - frameloc.x, MouseInfo.getPointerInfo().getLocation().y - frameloc.y);
-//		}
-		
-//		g.setColor(Color.GREEN);
-//		g.drawRect(0, 0, 10, 10);
+		if(Vars.showCollision){
+    		g.setColor(Color.GREEN);
+    		g.drawRect(-5, -5, 10, 10);
+		}
 		
 		g.setTransform(ot);
 		
@@ -736,6 +458,9 @@ public class GameWorld {
 		GameObject.SCALE = realScale;
 	}
 	
+	/**
+	 * @return The transform from pixel coordinates to world coordinates 
+	 */
 	public AffineTransform getTransform(){
 		
 		AffineTransform trans = new AffineTransform();
@@ -751,9 +476,13 @@ public class GameWorld {
 		return trans;
 	}
 	
+	/**
+	 * Renders the HUD, including game time, scores, active power ups, power cube storage, etc.
+	 * @param g - the {@link Graphics2D} to render onto.
+	 */
 	private void renderHUD(Graphics2D g) {
 		
-		if(Ship.buildMode){
+		if(Robot.buildMode){
 			g.setFont(Fonts.gamer.deriveFont(40f));
 			g.setColor(Color.WHITE);
 			g.drawString("BUILD MODE", 10, 44);
@@ -762,7 +491,7 @@ public class GameWorld {
 			g.setColor(new Color(0.2f, 0.2f, 0.2f, 0.7f));
 			g.fillRect(Game.getWidth() - 100, Game.getHeight() - 100, 100, 100);
 			
-			Player p = Game.getWorld().getSelf();
+			Player p = Game.getWorld().getSelfPlayer();
 			if(p != null){
 				if(p.buildSelected != null && p.buildPreview != null){
 					AffineTransform trans = g.getTransform();
@@ -822,8 +551,11 @@ public class GameWorld {
 		
 //		g.drawLine(Game.getWidth()/2, 0, Game.getWidth()/2, 100);
 		
+		
 		g.setFont(Fonts.pixelLCD.deriveFont(40f));
 		
+		// game time
+
 		double time = gameTime / 60;
 		
 		int seconds = (int) (time % 60);
@@ -834,10 +566,12 @@ public class GameWorld {
 		String timeS = minutesStr + ":" + secondsStr;
 		g.setColor(Color.DARK_GRAY);
 		g.drawString(timeS, Game.getWidth()/2 - g.getFontMetrics().stringWidth(timeS)/2 - 3, scoreBoardY - 34 - 3);
-		g.setColor(getSelf().team.color);
+		g.setColor(getSelfPlayer().team.color);
 		g.drawString(timeS, Game.getWidth()/2 - g.getFontMetrics().stringWidth(timeS)/2, scoreBoardY - 34);
 		
 		g.setFont(Fonts.pixelLCD.deriveFont(28f));
+		
+		// scoreboard
 		
 		int colonWidth = g.getFontMetrics().stringWidth(":")/2;
 		
@@ -858,36 +592,35 @@ public class GameWorld {
 		g.setColor(Team.BLUE.color);
 		g.drawString("" + blueScore, Game.getWidth()/2 + (colonWidth), scoreBoardY);
 		
+		
+		// power cube storage
+		
 		g.drawImage(PowerCube.spr.getImage(), Game.getWidth() - 80, Game.getHeight() - 80, 60, 60, null);
+		int numCubes = getProperties(getSelfPlayer().team).getCubeStorage();
 		g.setFont(Fonts.pixeled.deriveFont(14f));
 		g.setColor(Color.DARK_GRAY);
-		g.drawString("" + cubeStorage.get(getSelf().team), Game.getWidth() - 80 + 53, Game.getHeight() - 80 + 65);
+		g.drawString("" + numCubes, Game.getWidth() - 80 + 53, Game.getHeight() - 80 + 65);
 		g.setColor(Color.WHITE);
-		g.drawString("" + cubeStorage.get(getSelf().team), Game.getWidth() - 80 + 55, Game.getHeight() - 80 + 67);
+		g.drawString("" + numCubes, Game.getWidth() - 80 + 55, Game.getHeight() - 80 + 67);
 		
 	}
 
+	/**
+	 * Updates the world, and also updates rendering zoom and offsets.
+	 */
 	public void tick(){
 		
-		//System.out.println(GameObject.SCALE);
-		//System.out.println(Math.round((float)(GameObject.SCALE*100f))/100f);
-		
-		//System.out.println("aa");
-		
-		//System.out.println(GameObject.SCALE + " " + GameObject.DESIRED_SCALE);
+		// update render scale
 		
 		GameObject.DESIRED_SCALE = (Math.round((float)(GameObject.DESIRED_SCALE*100f))/100f);
 		GameObject.SCALE += (GameObject.DESIRED_SCALE - GameObject.SCALE + GameObject.ZOOM_SCALE)/4f;
-		//GameObject.SCALE = GameObject.DESIRED_SCALE;
 		GameObject.SCALE = (Math.round((float)(GameObject.SCALE*10f))/10f);
-		//System.out.println(GameObject.SCALE);
+		
 		if(GameObject.SCALE < 0.1) {
-			//GameObject.SCALE = 1;
-			//GameObject.DESIRED_SCALE = 1;
 			GameObject.ZOOM_SCALE *= 0.95;
 		}
-			
-		//System.out.println(GameObject.SCALE);
+		
+		// update render offset
 		
 		if(Game.isServer()){
 			xOffset = -5 * GameObject.SCALE + Game.getDisp().realWidth/2;
@@ -897,152 +630,31 @@ public class GameWorld {
     		yOffset = -selfPlayer.base.getWorldCenter().y * GameObject.SCALE + Game.getDisp().realHeight/2;
 		}
 		
-//		xOffset = 0;
-//		yOffset = 0;
-		
 		xOffset = (Math.round((float)(xOffset*100f))/100f);
 		yOffset = (Math.round((float)(yOffset*100f))/100f);
 		
-		
-		AffineTransform trans = new AffineTransform();
-		
-		trans.concatenate(Game.getWorld().getTransform());
-		trans.scale(GameObject.SCALE, GameObject.SCALE);
-		trans.translate(fieldXofs, fieldYofs);
-		
-		Point mPos = Game.mouseLoc();
-		
-		Point pt = new Point();
-		try {
-			AffineTransform inv = trans.createInverse();
-			Point2D.Float f = new Point2D.Float(0, 0);
-			inv.transform(mPos, f);
-//			System.out.println(f);
-		}catch (NoninvertibleTransformException e) {
-			e.printStackTrace();
-		}
-	
-		
-//		if(Game.getTime() % 30 == 0){
-//			
-//			double dx = selfPlayer.getLocation().x - 1;
-//			double dy = selfPlayer.getLocation().y - 0;
-//			
-//			System.out.println(dx + " " + dy);
-//			
-//			double angle = Math.atan2(dy, dx) + Math.toRadians(90);
-//			
-//			System.out.println(Math.toDegrees(angle));
-//			
-//			Bullet b = new Bullet("null", 1, 0, angle);
-//			addBullet(b);
-//		}
-		
-		//System.out.println("bb");
-		
+		// decrease the remaining game time if its more than 0
 		if(gameTime > 0) gameTime--;
 		
-		List<Body> bodies = new ArrayList<Body>();
-		bodies.addAll(world.getBodies());
-		for(Body b : bodies){
-			GameObject o = (GameObject) b;
-			//System.out.println(o.getWorldCenter());
-//			if(water != null){
-//				if(o != water && o.getMass().getType() == MassType.NORMAL){
-//					
-//					double contains = water.containsFixture(o);
-//					System.out.println(contains + " " + o.getMass().getMass());
-//					if(contains > o.getMass().getMass()){
-//						//System.out.println(o.getMass().getCenter().copy().subtract(o.getWorldCenter()).x);
-//						//System.out.println((o.getMass().getCenter().x-o.getWorldCenter().x/GameObject.SCALE) + " " + o.getWorldCenter().x);
-//						//System.out.println(contains + " " + o.getMass().getMass());
-//						o.applyForce(new Vector2(0, (-world.getGravity().y * 1.5f) * o.getMass().getMass()));
-//						
-//						//System.out.println(o + " " + o.desiredRotation());
-//						//System.out.println(o + " " + o.desiredRotation);
-//						float desiredRot = o.desiredRotation;
-//						
-//						float rot = (float) Math.toDegrees(o.getTransform().getRotation());
-//						//rot += 90;
-//						//rot %= 360;
-//						//rot += 180;
-//						//rot = 180;
-//						rot += desiredRot;
-//						//System.out.println(rot - desiredRot);
-//						
-//						float correction = (float) (-rot / GameObject.SCALE);
-//						
-//						//System.out.println(o.getMass().getMass());
-//						float range = (float) 2.4f;
-//						
-//						//System.out.println(rot + " " + correction);
-//							if(correction > o.getTorque() + range){
-//								correction = 0;
-//							}else if(correction < o.getTorque() - range){
-//								correction = 0;
-//							}
-//						o.applyTorque(correction * o.getMass().getMass());
-//					}
-//				}
-//			}
-			
-//			if(Game.game.input.leftMouse && o.pullable){
-//				//System.out.println(o.getMass().getMass());
-//				Point frameloc = Game.game.frame.getLocation();
-//				frameloc.x += Game.game.frame.getInsets().right;
-//				frameloc.y += Game.game.frame.getInsets().top;
-//				//System.out.println();
-//				Vector2 mouse = new Vector2(MouseInfo.getPointerInfo().getLocation().getX() - frameloc.getX() - xOffset, MouseInfo.getPointerInfo().getLocation().getY() - frameloc.getY() - yOffset);
-//				//System.out.println(mouse + " " + o.getWorldCenter());
-//				o.applyForce(mouse.subtract(o.getWorldCenter().multiply(GameObject.SCALE)).multiply(0.1f).multiply(o.getMass().getMass()));
-//				//o.applyForce(new Vector2(new Vector2(), new Vector2(o.getLocalCenter(), y)));
-//			}
-		}
-		
-//		if(Game.game.input.rightMouse && Game.game.time % 5 == 0){
-//			Point frameloc = Game.game.frame.getLocation();
-//			frameloc.x += Game.game.frame.getInsets().right;
-//			frameloc.y += Game.game.frame.getInsets().top;
-//			
-//			GameObject go = new GameObject();
-//			BodyFixture fix = new BodyFixture(new Circle(2 / GameObject.SCALE));
-//			fix.setDensity(0.5f);
-//			go.addFixture(fix);
-//			go.translate((Game.game.input.rStart.x - frameloc.x) / GameObject.SCALE, (Game.game.input.rStart.y - frameloc.y) / GameObject.SCALE);
-//			go.setMass(MassType.NORMAL);
-//			
-//			Vector2 mouse = new Vector2(MouseInfo.getPointerInfo().getLocation().getX() - frameloc.getX(), MouseInfo.getPointerInfo().getLocation().getY() - frameloc.getY());
-//			go.applyForce(mouse.subtract(go.getWorldCenter().multiply(GameObject.SCALE)).multiply(4f).multiply(go.getMass().getMass()));
-//			go.color = new Color(64, 64, (go.color.getBlue()));
-//			world.addBody(go);
-//			
-//			Scheduler.delayedTask(new Runnable() {
-//				@Override
-//				public void run() {
-//					// TODO Auto-generated method stub
-//					toRemove.add(go);
-//				}
-//			}, 60 * 5);
-//			//g.drawLine(Game.game.input.rStart.x - frameloc.x, Game.game.input.rStart.y - frameloc.y, MouseInfo.getPointerInfo().getLocation().x - frameloc.x, MouseInfo.getPointerInfo().getLocation().y - frameloc.y);
-//		}
+		// power ups
 		
 		if(power_boost_timer > 0){
 			if(power_boost_level % 2 == 0){ // 0 or 2
-    			if(power_boost == Team.RED) redScoreModSwitch = 2;
-    			if(power_boost == Team.BLUE) blueScoreModSwitch = 2;
+    			if(power_boost == Team.RED) getProperties(Team.RED).setSwitchScoreMod(2);
+    			if(power_boost == Team.BLUE) getProperties(Team.BLUE).setSwitchScoreMod(2);
 			}
 			
 			if(power_boost_level >= 1){ // 1 or 2
-    			if(power_boost == Team.RED) redScoreModScale = 2;
-    			if(power_boost == Team.BLUE) blueScoreModScale = 2;
+				if(power_boost == Team.RED) getProperties(Team.RED).setScaleScoreMod(2);
+    			if(power_boost == Team.BLUE) getProperties(Team.BLUE).setScaleScoreMod(2);
 			}
 			
 			power_boost_timer--;
 			if(power_boost_timer == 0){
-				redScoreModSwitch = 1;
-				redScoreModScale = 1;
-				blueScoreModSwitch = 1;
-				blueScoreModScale = 1;
+				getProperties(Team.RED).setSwitchScoreMod(2);
+				getProperties(Team.RED).setScaleScoreMod(2);
+				getProperties(Team.BLUE).setSwitchScoreMod(2);
+				getProperties(Team.BLUE).setScaleScoreMod(2);
 				
 				power_boost = Team.NONE;
 				if(power_boost_queued != Team.NONE){
@@ -1054,8 +666,8 @@ public class GameWorld {
 		
 		if(power_force_timer > 0){
 			if(power_force_level % 2 == 0){ // 0 or 2
-				if(power_force == Team.RED) redSwitch.setOwnerOverride(Team.RED);
-				if(power_force == Team.BLUE) blueSwitch.setOwnerOverride(Team.BLUE);
+				if(power_force == Team.RED) getSwitch(Team.RED).setOwnerOverride(Team.RED);
+				if(power_force == Team.BLUE) getSwitch(Team.BLUE).setOwnerOverride(Team.BLUE);
 			}
 			
 			if(power_force_level >= 1){ // 1 or 2
@@ -1066,8 +678,8 @@ public class GameWorld {
 			if(power_force_timer == 0){
 				power_force = Team.NONE;
 				
-				redSwitch.setOwnerOverride(Team.NONE);
-				blueSwitch.setOwnerOverride(Team.NONE);
+				getSwitch(Team.RED).setOwnerOverride(Team.NONE);
+				getSwitch(Team.BLUE).setOwnerOverride(Team.NONE);
 				scale.setOwnerOverride(Team.NONE);
 				
 				if(power_force_queued != Team.NONE){
@@ -1077,194 +689,220 @@ public class GameWorld {
 			}
 		}
 		
+		// if a power cube is in a team's exchange, increment their cube storage, add some velocity as a fun little animation, and destroy the physical cube after a bit
 		List<PowerCube> cub = new ArrayList<PowerCube>();
 		cub.addAll(cubes);
 		for(PowerCube c : cub){
-			if(beingDeleted .contains(c)) continue;
-			if(redExchangeSensor.contains(c.base.getWorldCenter())){
-				cubeStorage.put(Team.RED, cubeStorage.get(Team.RED) + 1);
-				beingDeleted.add(c);
-				c.base.setLinearVelocity(-40, 0);
-				Scheduler.delayedTask(() -> {
-					removeCube(c);
-				}, 30);
-			}else if(blueExchangeSensor != null && blueExchangeSensor.contains(c.base.getWorldCenter())){
-				cubeStorage.put(Team.BLUE, cubeStorage.get(Team.BLUE) + 1);
-				beingDeleted.add(c);
-				c.base.setLinearVelocity(40, 0);
-				Scheduler.delayedTask(() -> {
-					removeCube(c);
-				}, 30);
+			if(exchanging .contains(c)) continue;
+			for(Team team : getPlayingTeams()){
+				if(getExchangeSensor(team) != null && getExchangeSensor(team).contains(c.base.getWorldCenter())){
+					getProperties(team).addCubeStorage(1);
+					exchanging.add(c);
+					c.base.setLinearVelocity(team == Team.RED ? -40 : 40, 0); // red's exchange is facing left while blue's is facing right
+					Scheduler.delayedTask(() -> {
+						removeCube(c);
+					}, 30);
+				}
 			}
 		}
 		
+		// update the scores for the switches and scale every second (once every 60 ticks)
 		if(Game.getTime() % 60 == 0){
-    		if(blueSwitch.getOwner() == Team.BLUE){
-    			addScore(Team.BLUE, 1 * blueScoreModSwitch);
-    		}
+			for(Team team : getPlayingTeams()){
+				if(getSwitch(team).getOwner() == team){
+					TeamProperties tp = getProperties(team);
+					tp.addScore(tp.getSwitchScoreMod());
+	    		}
+			}
     		
-    		if(redSwitch.getOwner() == Team.RED){
-    			addScore(Team.RED, 1 * redScoreModSwitch);
-    		}
-    		
-    		if(scale.getOwner() == Team.BLUE){
-    			addScore(Team.BLUE, 1 * blueScoreModSwitch);
-    		}else if(scale.getOwner() == Team.RED){
-    			addScore(Team.RED, 1 * redScoreModSwitch);
-    		}
+			if(scale.getOwner() != Team.NONE){
+    			TeamProperties tp = getProperties(scale.getOwner());
+    			tp.addScore(tp.getScaleScoreMod());
+			}
 		}
 		
+		// update the players
 		for(Player p : players){
 			if(p != null) p.tick();
 		}
 		
+		// remove particles that are done living
 		List<GameObject> par = new ArrayList<GameObject>();
 		par.addAll(particles);
 		for(GameObject o : par){
 			if(System.currentTimeMillis() >= o.destructionTime){
-				if(world.removeBody(o)){
+				if(getWorld().removeBody(o)){
 					particles.remove(o);
 				}
 			}
 		}
 		
-		List<Switch> sca = new ArrayList<Switch>();
+		// tick the scale and switches
+		List<Balance> sca = new ArrayList<Balance>();
 		sca.addAll(scales);
-		for(Switch o : sca){
+		for(Balance o : sca){
 			if(o != null) o.tick();
 		}
 		
+		// remove any miscellaneous game objects
 		List<GameObject> rem = new ArrayList<GameObject>();
 		rem.addAll(toRemove);
 		for(GameObject o : rem){
-			world.removeBody(o);
+			getWorld().removeBody(o);
 			toRemove.remove(o);
 		}
 		
+		
+		// update the physics world
 		try{
-			world.update(1d/60d);
+			getWorld().update(1d/60d);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 		
-		//System.out.println("ff");
-	}
-	
-	private void addScore(Team blue, int i) {
-		score.put(blue, score.get(blue) + i);
 	}
 
-	public GameObject createBoatObject(){
-		GameObject r1 = new GameObject();
-		BodyFixture bf1 = r1.addFixture(new Polygon(new Vector2(180 / GameObject.SCALE, 300 / GameObject.SCALE), new Vector2(100 / GameObject.SCALE, 200 / GameObject.SCALE), new Vector2(0 / GameObject.SCALE, 0 / GameObject.SCALE)));
-		bf1.setDensity(0.5f);
-		
-//		Rectangle w1 = new Rectangle(44d / GameObject.SCALEd, 14d / GameObject.SCALEd);
-//		w1.translate(0, -28 / GameObject.SCALEd);
-//		BodyFixture bf2 = r1.addFixture(w1);
-//		bf2.setDensity(0.1f);
-		
-//		Rectangle w2 = new Rectangle(44d / GameObject.SCALEd, 12d / GameObject.SCALEd);
-//		w2.translate(0, 20 / GameObject.SCALEd);
-//		BodyFixture bf3 = r1.addFixture(w2);
-//		bf3.setDensity(0.1f);
-		
-		r1.setMass(MassType.NORMAL);
-		r1.desiredRotation = (float) GameObject.SCALE;
-		
-		return r1;
-	}
-	
-	public Player getSelf(){
-		return selfPlayer;
-	}
-
+	/**
+	 * Returns the {@link Player} with the specified username.
+	 * @param name - the username to search for.
+	 * @return the {@link Player} with the specified username, or <code>null</code> if they could not be founc.
+	 */
 	public Player getPlayer(String name) {
 		for(Player p : players){
-//			System.out.println(p.name);
 			if(p != null && p.name != null) if(p.name.equals(name)) return p;
 		}
 		return null;
 	}
 
+	/**
+	 * @return a {@link List} of all of the connected {@link Player Players}
+	 */
 	public List<Player> getPlayers() {
 		return players;
 	}
 
+	/**
+	 * Removes the specified {@link Player} from the world, if they are in it.
+	 * @param player - the {@link Player} to remove.
+	 */
 	public void removePlayer(Player player) {
 		players.remove(player);
-		if(player.base != null) world.removeBody(player.base);
+		if(player.base != null) getWorld().removeBody(player.base);
 	}
 	
-	public void addParticle(GameObject obj){
-		particles.add(obj);
-		world.addBody(obj);
+	/**
+	 * Adds a particle to the world.
+	 * @param part - the particle to add.
+	 */
+	public void addParticle(GameObject part){
+		particles.add(part);
+		getWorld().addBody(part);
 	}
 	
-	public void addPowerCube(PowerCube obj){
-		cubes.add(obj);
-		world.addBody(obj.base);
+	/**
+	 * Adds a {@link PowerCube} to the world.
+	 * @param cube - the {@link PowerCube} to add.
+	 */
+	public void addPowerCube(PowerCube cube){
+		cubes.add(cube);
+		getWorld().addBody(cube.base);
 	}
 
+	/**
+	 * Returns the {@link Component} represented by the specified {@link GameObject}.
+	 * @param go - the {@link GameObject} to search for.
+	 * @return the {@link Component} represented by the specified {@link GameObject}, or <code>null</code> if it could not be found.
+	 */
 	public Component getComponent(GameObject go) {
 		for(Player p : players){
-			if(p.ship == null) continue;
-			Component c = p.ship.getComponent(go);
+			if(p.robot == null) continue;
+			Component c = p.robot.getComponent(go);
 			if(c != null) return c;
 		}
 		return null;
 	}
 
+	/**
+	 * Removes a {@link Component} from the world, and runs {@link Player#destroyComponent(Component)} on the player who owns this {@link Component}.
+	 * @param comp - the {@link Component} to remove
+	 * @see Player#destroyComponent(Component)
+	 */
 	public void removeComponent(Component comp) {
 		for(Player p : players){
-			Component c = p.ship.getComponent(comp.lastBody);
+			Component c = p.robot.getComponent(comp.lastBody);
 			if(c != null) {
 				p.destroyComponent(c);
 			}
 		}
 	}
 
+	/**
+	 * Returns the {@link Player} whose {@link Robot} contains the specified {@link Component}.
+	 * @param comp - the {@link Component} to search for.
+	 * @return the {@link Player} whose {@link Robot} contains the specified {@link Component}, or <code>null</code> if it could not be found.
+	 */
 	public Player getPlayer(Component comp) {
 		for(Player p : players){
-			Component c = p.ship.getComponent(comp.lastBody);
+			Component c = p.robot.getComponent(comp.lastBody);
 			if(c != null) return p;
 		}
 		return null;
 	}
 
-	public boolean isPowerCube(GameObject o) {
+	/**
+	 * Checks whether the specified {@link GameObject} is contained by a {@link PowerCube}.
+	 * @param obj - the object to check
+	 * @return <code>true<code> if the {@link GameObject} is contained by a {@link PowerCube}.<br>
+	 * <code>false</code> otherwise 
+	 */
+	public boolean isPowerCube(GameObject obj) {
 		for(PowerCube b : cubes){
-			if(b.base == o) return true;
+			if(b.base == obj) return true;
 		}
 		return false;
 	}
 	
+	/**
+	 * @return a {@link List} of all of the active {@link PowerCube PowerCubes}.
+	 */
 	public List<PowerCube> getCubes(){
 		List<PowerCube> pc = new ArrayList<PowerCube>();
 		pc.addAll(cubes);
 		return pc;
 	}
 
-	public void removeCube(PowerCube c) {
-		cubes.remove(c);
-		world.removeBody(c.base);
-		beingDeleted.remove(c);
+	/**
+	 * Removes the specified {@link PowerCube} from the world.
+	 * @param cube - the {@link PowerCube} to remove.
+	 */
+	public void removeCube(PowerCube cube) {
+		cubes.remove(cube);
+		getWorld().removeBody(cube.base);
+		exchanging.remove(cube);
 	}
 	
-	public void addScale(Switch scale){
-		scales.add(scale);
-		scalePlatforms.add(scale.getRedPlatform());
-		scalePlatforms.add(scale.getBluePlatform());
-		world.addBody(scale.getBluePlatform().base);
-		world.addBody(scale.getRedPlatform().base);
+	/**
+	 * Adds a {@link Balance} to the world.
+	 * @param balance - the {@link Balance} to add.
+	 */
+	public void addScale(Balance balance){
+		scales.add(balance);
+		scalePlatforms.add(balance.getRedPlatform());
+		scalePlatforms.add(balance.getBluePlatform());
+		getWorld().addBody(balance.getBluePlatform().base);
+		getWorld().addBody(balance.getRedPlatform().base);
 		
-//		if(!(scale instanceof Scale)){
-			world.addBody(scale.walls);
-			walls.add(scale.walls);
-//		}
+		getWorld().addBody(balance.walls);
+		walls.add(balance.walls);
 		
 	}
 	
+	/**
+	 * Checks whether the specified {@link PowerCube} is on a {@link ScalePlatform}.
+	 * @param cube - the {@link PowerCube} to check.
+	 * @return <code>true</code> if the {@link PowerCube} is on a {@link ScalePlatform}.<br>
+	 * <code>false</code> otherwise.
+	 */
 	public boolean isCubeOnScale(PowerCube cube) {
 		for(ScalePlatform sp : scalePlatforms) {
 			if(sp.base.contains(cube.base.getWorldCenter())) {
@@ -1274,6 +912,12 @@ public class GameWorld {
 		return false;
 	}
 	
+	/**
+	 * Causes the specified {@link Team} to use the boost power up.
+	 * @param team - the {@link Team} who tries to activate boost.
+	 * @return <code>true</code> if the boost power up is now active, or if the boost power up is now queued.<br>
+	 * <code>false</code> otherwise.
+	 */
 	public boolean useBoost(Team team){
 		if(power_force == team) return false;
 		System.out.println("boost " + power_boost_used.contains(team));
@@ -1291,15 +935,25 @@ public class GameWorld {
 		return true;
 	}
 	
+	/**
+	 * Forces the specified {@link Team} to use the boost power up immediately.<br>
+	 * If the other {@link Team} is already using it, they are overridden.
+	 * @param team - the {@link Team} who will use boost.
+	 */
 	public void forceBoost(Team team){
 		power_boost = team;
 		power_boost_timer = 60 * BOOST_TIME;
 		
 		if(team == Team.RED) power_boost_level = power_boost_level_red;
 		if(team == Team.BLUE) power_boost_level = power_boost_level_blue;
-		
 	}
 	
+	/**
+	 * Causes the specified {@link Team} to use the force power up.
+	 * @param team - the {@link Team} who will use force.
+	 * @return <code>true</code> if the force power up is now active, or if the force power up is now queued.<br>
+	 * <code>false</code> otherwise.
+	 */
 	public boolean useForce(Team team){
 		if(power_boost == team) return false;
 		if(power_force_used.contains(team)) return false;
@@ -1316,6 +970,11 @@ public class GameWorld {
 		return true;
 	}
 	
+	/**
+	 * Forces the specified {@link Team} to use the force power up immediately.<br>
+	 * If the other {@link Team} is already using it, they are overridden.
+	 * @param team - the {@link Team} who will use force.
+	 */
 	public void forceForce(Team team){
 		power_force = team;
 		power_force_timer = 60 * BOOST_TIME;
@@ -1324,12 +983,21 @@ public class GameWorld {
 		if(team == Team.BLUE) power_force_level = power_force_level_blue;
 	}
 	
+	/**
+	 * Causes the specified {@link Team} to use the levitate power up.
+	 * @param team - the {@link Team} who will use levitate.
+	 * @return <code>true</code> if levitate was activated by this call.<br>
+	 * <code>false</code> otherwise.
+	 */
 	public boolean useLevitate(Team team){
-		if(power_levitate_used.contains(team)) return false;
-		power_levitate_used.add(team);
+		if(getProperties(team).getUsedLevitate()) return false;
+		getProperties(team).setUsedLevitate(true);
 		return true;
 	}
 	
+	/**
+	 * Resets all power ups to the starting configuration.
+	 */
 	public void resetPowerups(){
 		power_boost = Team.NONE;
 		power_boost_queued = Team.NONE;
@@ -1345,15 +1013,25 @@ public class GameWorld {
 		power_force_level_blue = 0;
 		power_force_used.clear();
 		
-		power_levitate_used.clear();
+		for(Team t : getPlayingTeams()){
+			getProperties(t).setUsedLevitate(false);
+			getProperties(t).setSwitchScoreMod(1);
+			getProperties(t).setScaleScoreMod(1);
+		}
 	}
 	
-	public int getScoreWithPenalites(Team t){
-		int base = score.get(t);
-		Team other = t.getOpposite();
+	/**
+	 * Calculates the score for the specified {@link Team}, taking penalties into account.
+	 * @param team - the {@link Team} whose score will be calculated.
+	 * @return the {@link Team}'s score.
+	 */
+	public int getScoreWithPenalites(Team team){
+		int base = getProperties(team).getScore();
+		Team other = team.getOpposite();
+		TeamProperties otherTp = getProperties(other); 
 		
-		for(Pentalty p : penalties.get(other).keySet()){ // we check the other team's penalties because penalties add to your rival's score
-			int num = penalties.get(other).get(p);
+		for(Pentalty p : otherTp.getPenalties().keySet()){ // we check the other team's penalties because penalties add to your rival's score
+			int num = otherTp.getPenaltyCount(p);
 			switch(p){
 				case FOUL:
 					base += 5 * num;
@@ -1368,5 +1046,153 @@ public class GameWorld {
 		
 		return base;
 	}
+
+	/** 
+	 * @return <code>true</code> if the renderer is aligned with the player's robot.<br>
+	 * <code>false<code> otherwise.
+	 */
+	public static boolean isRobotAligned() {
+		return robotAligned;
+	}
+
+	/**
+	 * Sets whether or not the renderer is aligned with the player's robot.
+	 * @param robotAligned - whether the renderer should be aligned with the player's robot.
+	 */
+	public static void setRobotAligned(boolean robotAligned) {
+		GameWorld.robotAligned = robotAligned;
+	}
+
+	/**
+	 * @return the suggested global angular damping.
+	 * @see Body#setAngularDamping(double)
+	 */
+	public static double getAngularDamping() {
+		return ANGULAR_DAMPING;
+	}
+
+	/**
+	 * @return the suggested global linear damping.
+	 * @see Body#setLinearDamping(double)
+	 */
+	public static double getLinearDamping() {
+		return LINEAR_DAMPING;
+	}
+
+	/**
+	 * @return the {@link Sprite} of the base field.
+	 */
+	public static Sprite getFieldImage() {
+		return field;
+	}
+
+	/**
+	 * @return the active physics {@link World}.
+	 */
+	public World getWorld() {
+		return world;
+	}
+
+	/**
+	 * @return the render xOffset.
+	 */
+	public double getXOffset() {
+		return xOffset;
+	}
+
+	/**
+	 * @return the render yOffset.
+	 */
+	public double getYOffset() {
+		return yOffset;
+	}
 	
+	/**
+	 * Returns the {@link Balance} on the side of the specified {@link Team}.
+	 * @param team - the {@link Team} to get the {@link Balance}.
+	 * @return the {@link Team}'s {@link Balance}.
+	 */
+	public Switch getSwitch(Team team){
+		return getProperties(team).getSwitch();
+	}
+	
+	/**
+	 * Returns the exchange sensor on the side of the specified {@link Team}.
+	 * @param team - the {@link Team} to get the exchange sensor.
+	 * @return the {@link Team}'s exchange sensor.
+	 */
+	public GameObject getExchangeSensor(Team team){
+		return getProperties(team).getExchangeSensor();
+	}
+	
+	/**
+	 * Returns the {@link TeamProperties} related to the specified {@link Team}.
+	 * @param team - the {@link Team} to get the {@link TeamProperties}.
+	 * @return the {@link Team}'s {@link TeamProperties}.
+	 */
+	public TeamProperties getProperties(Team team){
+		return teamProperties.get(team);
+	}
+	
+	/**
+	 * @return an array containing all of the {@link Team}s actually participating in the game (all {@link Team}s except {@link Team#NONE}).
+	 */
+	public Team[] getPlayingTeams(){
+		return new Team[]{Team.RED, Team.BLUE};
+	}
+
+	/**
+	 * @return a {@link List} containing all of the {@link ScalePlatform}s from the {@link Scale} and two {@link Balance}es
+	 */
+	public List<ScalePlatform> getScalePlatforms() {
+		List<ScalePlatform> sp = new ArrayList<ScalePlatform>();
+		for(Team t : getPlayingTeams()){
+			TeamProperties tp = getProperties(t);
+			sp.add(tp.getSwitch().getRedPlatform());
+			sp.add(tp.getSwitch().getBluePlatform());
+		}
+		
+		sp.add(scale.getBluePlatform());
+		sp.add(scale.getRedPlatform());
+		
+		return sp;
+	}
+
+	/**
+	 * @return the {@link Player} represented by this instance of the game (the real-life person playing).
+	 */
+	public Player getSelfPlayer(){
+		return selfPlayer;
+	}
+	
+	/**
+	 * Sets the {@link Player} represented by this instance of the game (the real-life person playing).
+	 * @param selfPlayer - the {@link Player} to set.
+	 */
+	public void setSelfPlayer(Player selfPlayer) {
+		this.selfPlayer = selfPlayer;
+	}
+
+	/**
+	 * @return the world location where the mouse is hovering.
+	 */
+	public static Vector2 getMouseWorldPos() {
+		return mouseWorldPos;
+	}
+
+	/**
+	 * @return the time remaining in the game, in ticks.
+	 */
+	public int getGameTime() {
+		return gameTime;
+	}
+
+	/**
+	 * Sets the remaining game time.
+	 * @param gameTime - the remaining game time, in ticks.
+	 */
+	public void setGameTime(int gameTime) {
+		this.gameTime = gameTime;
+	}
+
 }

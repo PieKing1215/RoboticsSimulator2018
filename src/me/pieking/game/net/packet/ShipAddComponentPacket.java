@@ -3,7 +3,7 @@ package me.pieking.game.net.packet;
 import java.io.UnsupportedEncodingException;
 
 import me.pieking.game.Game;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.Player;
 
 public class ShipAddComponentPacket extends Packet {
@@ -35,7 +35,7 @@ public class ShipAddComponentPacket extends Packet {
 			try{
     			Component c = pl.createComponent(cls, x, y, rot);
     			
-    			if(pl.ship.addComponent(c)) pl.constructShip();
+    			if(pl.robot.addComponent(c)) pl.constructShip();
     			
 			}catch(Exception e){
 				e.printStackTrace();

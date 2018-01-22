@@ -3,7 +3,7 @@ package me.pieking.game.net.packet;
 import java.awt.Point;
 
 import me.pieking.game.Game;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.Player;
 
 public class ShipComponentHealthPacket extends Packet {
@@ -29,8 +29,8 @@ public class ShipComponentHealthPacket extends Packet {
 	public void doAction() {
 		if(Game.getWorld().getPlayer(user) != null){
 			Player pl = Game.getWorld().getPlayer(user);
-			if(pl.ship != null){
-    			Component c = pl.ship.getComponent(new Point(x, y));
+			if(pl.robot != null){
+    			Component c = pl.robot.getComponent(new Point(x, y));
     			System.out.println(c);
     			if(c != null) {
     				c.health = health;

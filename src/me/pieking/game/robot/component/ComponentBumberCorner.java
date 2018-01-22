@@ -1,4 +1,4 @@
-package me.pieking.game.ship.component;
+package me.pieking.game.robot.component;
 
 import java.awt.Color;
 
@@ -11,7 +11,7 @@ import me.pieking.game.gfx.Spritesheet;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.Player;
 import me.pieking.game.world.PlayerFilter;
-import me.pieking.game.world.Switch.Team;
+import me.pieking.game.world.Balance.Team;
 
 public class ComponentBumberCorner extends Component {
 

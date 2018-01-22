@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import me.pieking.game.Game;
 import me.pieking.game.world.Player;
-import me.pieking.game.world.Switch.Team;
+import me.pieking.game.world.Balance.Team;
 
 public class JoinPacket extends Packet {
 

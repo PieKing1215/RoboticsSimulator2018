@@ -1,4 +1,4 @@
-package me.pieking.game.ship;
+package me.pieking.game.robot;
 
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
@@ -29,12 +29,12 @@ import me.pieking.game.FileSystem;
 import me.pieking.game.Game;
 import me.pieking.game.Location;
 import me.pieking.game.net.packet.ShipComponentActivatePacket;
-import me.pieking.game.ship.component.ActivatableComponent;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.ActivatableComponent;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.Player;
 
-public class Ship {
+public class Robot {
 
 	public static boolean buildMode = false;
 	
@@ -44,7 +44,7 @@ public class Ship {
 	
 	Player pl;
 	
-	public Ship(int size, List<Component> comp, Player pl) {
+	public Robot(int size, List<Component> comp, Player pl) {
 		this.comp = comp;
 		this.pl = pl;
 		this.gridSize = size;
@@ -113,16 +113,16 @@ public class Ship {
     					if(ac.toggleMode) {
     						ac.toggle();
     						
-    						if(pl == Game.getWorld().getSelf()){
+    						if(pl == Game.getWorld().getSelfPlayer()){
 	    						ShipComponentActivatePacket scap = new ShipComponentActivatePacket(pl.name, ac.bounds.x + "", ac.bounds.y + "", ac.activated + "");
-	    						Game.doPacketNoMe(scap);
+	    						Game.sendPacket(scap);
 	    					}
     					}else{
     						ac.activate();
 							
-							if(pl == Game.getWorld().getSelf()){
+							if(pl == Game.getWorld().getSelfPlayer()){
 	    						ShipComponentActivatePacket scap = new ShipComponentActivatePacket(pl.name, ac.bounds.x + "", ac.bounds.y + "", true + "");
-	    						Game.doPacketNoMe(scap);
+	    						Game.sendPacket(scap);
 	    					}
     					}
     				}
@@ -139,9 +139,9 @@ public class Ship {
     				ActivatableComponent ac = (ActivatableComponent) c;
     				if(ac.deactKeys.contains(e.getKeyCode()) && !ac.toggleMode) {
     					ac.deactivate();
-    					if(pl == Game.getWorld().getSelf()){
+    					if(pl == Game.getWorld().getSelfPlayer()){
     						ShipComponentActivatePacket scap = new ShipComponentActivatePacket(pl.name, ac.bounds.x + "", ac.bounds.y + "", false + "");
-    						Game.doPacketNoMe(scap);
+    						Game.sendPacket(scap);
     					}
     				}
     			}
@@ -389,11 +389,11 @@ public class Ship {
 		return bo.toByteArray();
 	}
 	
-	public static Ship load(String fileName, Player pl) throws IOException, ClassNotFoundException, NumberFormatException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public static Robot load(String fileName, Player pl) throws IOException, ClassNotFoundException, NumberFormatException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		return load(FileSystem.getFile("robots/" + fileName + ".rob"), pl);
 	}
 	
-	public static Ship load(File f, Player pl) throws IOException, ClassNotFoundException, NumberFormatException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public static Robot load(File f, Player pl) throws IOException, ClassNotFoundException, NumberFormatException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		
 		if(f.isDirectory()) {
 			System.err.println("Invalid ship: " + f.getAbsolutePath());
@@ -408,7 +408,7 @@ public class Ship {
 		return loadData(text, pl);
 	}
 	
-	public static Ship loadData(String data, Player pl) throws IOException, ClassNotFoundException, NumberFormatException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	public static Robot loadData(String data, Player pl) throws IOException, ClassNotFoundException, NumberFormatException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
 		String utf8 = StandardCharsets.UTF_8.name();
 		InputStream stream = new ByteArrayInputStream(data.getBytes(utf8));
@@ -451,7 +451,7 @@ public class Ship {
 					break;
 				case "key":
 					if(str[0].equals("null")) continue l;
-					String className = "me.pieking.game.ship.component." + str[0];
+					String className = "me.pieking.game.robot.component." + str[0];
 					@SuppressWarnings("unchecked")
 					Class<? extends Component> cl = (Class<? extends Component>) Class.forName(className);
 					componentKey.add(cl);
@@ -496,7 +496,7 @@ public class Ship {
 		br.close();
 		
 		
-		Ship s = new Ship(size, components, pl);
+		Robot s = new Robot(size, components, pl);
 		
 		return s;
 	}

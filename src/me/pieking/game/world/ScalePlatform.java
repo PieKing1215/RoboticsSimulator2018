@@ -14,7 +14,7 @@ import me.pieking.game.Game;
 import me.pieking.game.Location;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.gfx.Spritesheet;
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 import me.pieking.game.world.GameObject.BodyType;
 import me.pieking.game.world.GameObjectFilter.FilterType;
 
@@ -80,8 +80,8 @@ public class ScalePlatform {
 		base.setMass(MassType.INFINITE);
 		base.addFixture(bf);
 		
-		base.setAngularDamping(GameWorld.ANGULAR_DAMPING);
-		base.setLinearDamping(GameWorld.LINEAR_DAMPING);
+		base.setAngularDamping(GameWorld.getAngularDamping());
+		base.setLinearDamping(GameWorld.getLinearDamping());
 		base.translate(x, y);
 	}
 

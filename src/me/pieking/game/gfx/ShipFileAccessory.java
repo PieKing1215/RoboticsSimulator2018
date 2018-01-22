@@ -22,7 +22,7 @@ import javax.swing.JFileChooser;
 
 import me.pieking.game.Game;
 import me.pieking.game.Location;
-import me.pieking.game.ship.Ship;
+import me.pieking.game.robot.Robot;
 
 public class ShipFileAccessory extends JComponent implements PropertyChangeListener {
 
@@ -150,7 +150,7 @@ public class ShipFileAccessory extends JComponent implements PropertyChangeListe
 			g.fillRect(0, 0, width, width);
 			
 			System.out.println("loading");
-			Ship s = Ship.load(f, Game.getWorld().getSelf());
+			Robot s = Robot.load(f, Game.getWorld().getSelfPlayer());
 			System.out.println("done");
 			s.construct(new Location(0, 0), 0);
 			

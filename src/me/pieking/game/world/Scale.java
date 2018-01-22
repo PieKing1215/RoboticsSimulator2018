@@ -6,9 +6,9 @@ import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
-import me.pieking.game.ship.component.Component;
+import me.pieking.game.robot.component.Component;
 
-public class Scale extends Switch {
+public class Scale extends Balance {
 
 	public Scale(double x, double y, boolean blueTop) {
 		super(x, y, blueTop);
@@ -32,8 +32,8 @@ public class Scale extends Switch {
 		walls.setMass(MassType.INFINITE);
 		walls.addFixture(bf);
 		
-		walls.setAngularDamping(GameWorld.ANGULAR_DAMPING);
-		walls.setLinearDamping(GameWorld.LINEAR_DAMPING);
+		walls.setAngularDamping(GameWorld.getAngularDamping());
+		walls.setLinearDamping(GameWorld.getLinearDamping());
 		walls.translate(x, y);
 		
 	}

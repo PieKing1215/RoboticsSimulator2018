@@ -14,11 +14,12 @@ import java.util.HashMap;
 import java.util.List;
 
 import me.pieking.game.Game;
+import me.pieking.game.Vars;
 import me.pieking.game.command.Command;
-import me.pieking.game.ship.Ship;
+import me.pieking.game.robot.Robot;
 import me.pieking.game.world.GameWorld;
 import me.pieking.game.world.Player;
-import me.pieking.game.world.Switch.Team;
+import me.pieking.game.world.Balance.Team;
 
 public class KeyHandler implements KeyListener{
 
@@ -48,23 +49,23 @@ public class KeyHandler implements KeyListener{
 //		}
 		
 		if(e.getKeyCode() == KeyEvent.VK_NUMPAD5){
-			GameWorld.shipAligned = !GameWorld.shipAligned;
+			GameWorld.setRobotAligned(!GameWorld.isRobotAligned());
 		}
 		
-		if(Game.getWorld().getSelf() != null){
-			Player p = Game.getWorld().getSelf();
+		if(Game.getWorld().getSelfPlayer() != null){
+			Player p = Game.getWorld().getSelfPlayer();
 			if(p.hasFocus()){
         		if(e.getKeyCode() == KeyEvent.VK_B){
-        			Ship.buildMode = !Ship.buildMode;
+        			Robot.buildMode = !Robot.buildMode;
         		}else if(e.getKeyCode() == KeyEvent.VK_F6){
         			try {
-						p.ship.save("ship_" + System.currentTimeMillis());
+						p.robot.save("ship_" + System.currentTimeMillis());
 					}catch (IOException e1) {
 						e1.printStackTrace();
 					}
         		}
 		
-				if(Ship.buildMode){
+				if(Robot.buildMode){
 			
     				if(e.getKeyCode() == KeyEvent.VK_R){
     					p.buildRotate();
@@ -87,13 +88,13 @@ public class KeyHandler implements KeyListener{
 				Game.getWorld().useForce(e.isControlDown() ? Team.RED : Team.BLUE);
 			}else if(e.getKeyCode() == KeyEvent.VK_NUMPAD3){
 				Game.getWorld().useLevitate(e.isControlDown() ? Team.RED : Team.BLUE);
+			}else if(e.getKeyCode() == KeyEvent.VK_NUMPAD4){
+				Vars.showCollision = !Vars.showCollision;
 			}
 			
 		}
 		
-		if(Game.getWorld().getSelf() != null) Game.getWorld().getSelf().ship.keyPressed(e);
-		
-		
+		if(Game.getWorld().getSelfPlayer() != null) Game.getWorld().getSelfPlayer().robot.keyPressed(e);
 		
 	}
 	
@@ -140,7 +141,7 @@ public class KeyHandler implements KeyListener{
 			pressed.remove((Object)e.getKeyCode()); //cast the code to Object so it uses remove(Object) instead of remove(int)
 		}
 		
-		if(Game.getWorld().getSelf() != null) Game.getWorld().getSelf().ship.keyReleased(e);
+		if(Game.getWorld().getSelfPlayer() != null) Game.getWorld().getSelfPlayer().robot.keyReleased(e);
 	}
 
 	@Override

@@ -16,9 +16,9 @@ import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Images;
 import me.pieking.game.gfx.Render;
 import me.pieking.game.gfx.Sprite;
-import me.pieking.game.ship.component.ActivatableComponent;
-import me.pieking.game.ship.component.Component;
-import me.pieking.game.ship.component.ComputerComponent;
+import me.pieking.game.robot.component.ActivatableComponent;
+import me.pieking.game.robot.component.Component;
+import me.pieking.game.robot.component.ComputerComponent;
 
 public class ComponentInfoMenu extends Menu {
 
