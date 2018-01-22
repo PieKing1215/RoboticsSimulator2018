@@ -39,7 +39,7 @@ public class GameWorld {
 	private static final double ANGULAR_DAMPING = 50;
 	private static final double LINEAR_DAMPING = 16;
 
-	private static final Sprite field = Images.getSprite("field_temp.png");
+	private static final Sprite field = Images.getSprite("fieldnew.png");
 	private static boolean robotAligned = false;
 
 	public static final float FIELD_SCALE = 1.1f;
