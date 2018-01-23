@@ -1,17 +1,20 @@
 package me.pieking.game.world;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 import org.dyn4j.dynamics.BodyFixture;
-import org.dyn4j.geometry.Mass;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
 import me.pieking.game.Game;
 import me.pieking.game.Location;
+import me.pieking.game.Vars;
+import me.pieking.game.gfx.LEDStrip;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.gfx.Spritesheet;
 import me.pieking.game.robot.component.Component;
@@ -20,6 +23,8 @@ import me.pieking.game.world.GameObjectFilter.FilterType;
 
 public class ScalePlatform {
 
+	private static final boolean CIRCLE_LEDS = true;
+
 	public static Sprite spr = Spritesheet.tiles.subTile(0, 15, 2, 2);
 
 	public GameObject base;
@@ -27,7 +32,20 @@ public class ScalePlatform {
 	double sizeW = 6.2;
 	double sizeH = 5;
 	
-	public ScalePlatform(double x, double y, double sizeW, double sizeH) {
+	LEDStrip strip;
+	
+	double x;
+	double y;
+	
+	double ledYofs = 0;
+	double ledXofs = 0;
+	
+	public ScalePlatform(double x, double y, double sizeW, double sizeH, LEDStrip ledStrip) {
+		
+		this.x = x;
+		this.y = y;
+		
+		this.strip = ledStrip;
 		
 		this.sizeW = sizeW;
 		this.sizeH = sizeH;
@@ -85,17 +103,8 @@ public class ScalePlatform {
 		base.translate(x, y);
 	}
 
-	public ScalePlatform(double x, double y) {
-		
-//		this(x, y, sizeW, sizeH); // TODO: find a better way to do this
-		this(x, y, 6.2, 5);
-		
-//		float speed = 50f;
-//		Point2D.Float pt = Utils.polarToCartesian((float) Math.toRadians(Math.toDegrees(angle) + 90), speed);
-////		System.out.println(pt);
-//		Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(pt.x, pt.y));
-//		base.applyForce(vec);
-		
+	public ScalePlatform(double x, double y, LEDStrip ledStrip) {
+		this(x, y, 6.2, 5, ledStrip);
 	}
 	
 	public int numCubes(){
@@ -111,11 +120,7 @@ public class ScalePlatform {
 	}
 	
 	public void tick(){
-//		if(numCubes() > 0) {
-//			base.color = Color.GREEN;
-//		}else {
-//			base.color = Color.RED;
-//		}
+		strip.tick();
 	}
 
 	public Location getLocation() {
@@ -123,11 +128,60 @@ public class ScalePlatform {
 	}
 	
 	public void render(Graphics2D g){
-		if(Game.getTime() % 30 >= 15){
-			base.render(g, new BasicStroke(1f), spr, Component.unitSize * sizeW * 2, Component.unitSize * sizeH * 2);
-		}else{
-			base.render(g);
+		
+//		if(Game.getTime() % 30 >= 15){
+//			base.render(g, new BasicStroke(1f), spr, Component.unitSize * sizeW * 2, Component.unitSize * sizeH * 2);
+//		}else{
+//			base.render(g);
+//		}
+		
+		if(Vars.showCollision) base.render(g);
+
+		AffineTransform ot = g.getTransform();
+		
+		g.translate(base.getWorldCenter().x * GameObject.SCALE, base.getWorldCenter().y * GameObject.SCALE);
+		g.translate(-Component.unitSize * (sizeW/2) * GameObject.SCALE, -Component.unitSize * (sizeH/2) * GameObject.SCALE);
+		
+		AffineTransform tr = g.getTransform();
+		
+		int numPixels = strip.length();
+		for(int i = 0; i < numPixels; i++){
+			g.setTransform(tr);
+			
+			int x = 0;
+			int y = 0;
+			
+			if(i < 7){
+				x = 7 - i;
+			}else if(i < 19){
+				y = i - 7;
+			}else if(i < 25){
+				x = i - 18;
+				y = 11;
+			}else if(i < 32){
+				x = 8 + i - 25;
+			}else if(i < 43){
+				x = 14;
+				y = i - 31;
+			}else if(i < 50){
+				x = 13 - (i - 43);
+				y = 11;
+			}else{
+				continue;
+			}
+			
+    		g.translate(Component.unitSize*0.5 * GameObject.SCALE * (x + ledXofs), Component.unitSize*0.48 * GameObject.SCALE * (y + ledYofs + 0.5));
+    		Rectangle2D r2d = new Rectangle2D.Double(-.06 * GameObject.SCALE, -.06 * GameObject.SCALE, 0.12 * GameObject.SCALE * 1.5, 0.12 * GameObject.SCALE * 1.5);
+    		Ellipse2D e2d = new Ellipse2D.Double(-.06 * GameObject.SCALE, -.06 * GameObject.SCALE, 0.12 * GameObject.SCALE * 1.5, 0.12 * GameObject.SCALE * 1.5);
+    		g.setColor(strip.getColor(i));
+    		if(CIRCLE_LEDS){
+    			g.fill(e2d);
+    		}else{
+    			g.fill(r2d);
+    		}
 		}
+		
+		g.setTransform(ot);
 	}
 	
 }

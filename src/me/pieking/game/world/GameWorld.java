@@ -3,12 +3,9 @@ package me.pieking.game.world;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Shape;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +13,6 @@ import java.util.List;
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.dynamics.World;
-import org.dyn4j.geometry.MassType;
-import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Triangle;
 import org.dyn4j.geometry.Vector2;
@@ -28,6 +23,7 @@ import me.pieking.game.Scheduler;
 import me.pieking.game.Vars;
 import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Images;
+import me.pieking.game.gfx.LEDStrip;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.robot.Robot;
 import me.pieking.game.robot.component.Component;
@@ -268,11 +264,18 @@ public class GameWorld {
 		
 		boolean[] switchOrientation = getRandomSwitchOrientation();
 		
-		Switch blueSwitch = new Switch(10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[0]);
+		LEDStrip srr = new LEDStrip(50);
+		LEDStrip srb = new LEDStrip(50);
+		LEDStrip sbr = new LEDStrip(50);
+		LEDStrip sbb = new LEDStrip(50);
+		LEDStrip sr = new LEDStrip(50);
+		LEDStrip sb = new LEDStrip(50);
+		
+		Switch blueSwitch = new Switch(10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[0], sbr, sbb);
 		addScale(blueSwitch);
-		scale = new Scale(0.07 + fieldXofs, 0 + fieldYofs, switchOrientation[1]);
+		scale = new Scale(0.07 + fieldXofs, 0 + fieldYofs, switchOrientation[1], sr, sb);
 		addScale(scale);
-		Switch redSwitch = new Switch(-10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[2]);
+		Switch redSwitch = new Switch(-10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[2], srr, srb);
 		addScale(redSwitch);
 
 		teamProperties.put(Team.RED, new TeamProperties(redSwitch, redExchangeSensor));
@@ -752,7 +755,6 @@ public class GameWorld {
 			toRemove.remove(o);
 		}
 		
-		
 		// update the physics world
 		try{
 			getWorld().update(1d/60d);
@@ -887,13 +889,13 @@ public class GameWorld {
 	 */
 	public void addScale(Balance balance){
 		scales.add(balance);
+		getWorld().addBody(balance.walls);
+		walls.add(balance.walls);
 		scalePlatforms.add(balance.getRedPlatform());
 		scalePlatforms.add(balance.getBluePlatform());
 		getWorld().addBody(balance.getBluePlatform().base);
 		getWorld().addBody(balance.getRedPlatform().base);
 		
-		getWorld().addBody(balance.walls);
-		walls.add(balance.walls);
 		
 	}
 	

@@ -7,11 +7,11 @@ import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
+import me.pieking.game.Game;
 import me.pieking.game.Utils;
+import me.pieking.game.gfx.LEDStrip;
+import me.pieking.game.gfx.LEDStrip.StripMode;
 import me.pieking.game.robot.component.Component;
-import me.pieking.game.world.GameObject.BodyType;
-import me.pieking.game.world.GameObjectFilter.FilterType;
-import me.pieking.game.world.Balance.Team;
 
 public class Balance {
 
@@ -22,15 +22,18 @@ public class Balance {
 	
 	public GameObject walls;
 	
-	public Balance(double x, double y, boolean blueTop) {
-		red = new ScalePlatform(x-.19, y - 3.5 - .25, 7, 5.5);
-		blue = new ScalePlatform(x-.19, y + 3.5, 7, 5.5);
+	public Balance(double x, double y, boolean blueTop, LEDStrip ledStripTop, LEDStrip ledStripBottom) {
+		red = new ScalePlatform(x-.19, y - 3.5 - .25, 7, 5.5, ledStripTop);
+		blue = new ScalePlatform(x-.19, y + 3.5, 7, 5.5, ledStripBottom);
 		
 		if(blueTop){
 			ScalePlatform temp = red;
 			red = blue;
 			blue = temp;
 		}
+		
+		red.strip.setMode(StripMode.SOLID_RED_FULL);
+		blue.strip.setMode(StripMode.SOLID_BLUE_FULL);
 		
 		x *= GameWorld.FIELD_SCALE;
 		y *= GameWorld.FIELD_SCALE;
@@ -58,12 +61,33 @@ public class Balance {
 	}
 
 	public void tick() {
+		blue.tick();
+		red.tick();
+		
 		if(red.numCubes() == blue.numCubes()) {
 			ownership = Team.NONE;
+			red.strip.setMode(StripMode.SOLID_RED_FULL);
+			blue.strip.setMode(StripMode.FILL_BLUE);
 		}else if(red.numCubes() > blue.numCubes()) {
 			ownership = Team.RED;
+			red.strip.setMode(StripMode.PULSE_RED);
+			blue.strip.setMode(StripMode.SOLID_BLUE_WEAK);
 		}else {
 			ownership = Team.BLUE;
+			red.strip.setMode(StripMode.SOLID_RED_WEAK);
+			blue.strip.setMode(StripMode.PULSE_BLUE);
+		}
+		
+		if(Game.getWorld().power_boost == Team.RED){
+			red.strip.setMode(StripMode.CHASE_RED);
+		}else if(Game.getWorld().power_boost == Team.BLUE){
+			blue.strip.setMode(StripMode.CHASE_BLUE);
+		}
+		
+		if(Game.getWorld().power_force == Team.RED){
+			red.strip.setMode(StripMode.PULSE_RED_BLUE_CORNERS);
+		}else if(Game.getWorld().power_force == Team.BLUE){
+			blue.strip.setMode(StripMode.PULSE_BLUE_RED_CORNERS);
 		}
 		
 		red.base.color = Utils.fade(Color.GRAY, Team.RED.color, 0.2f);
