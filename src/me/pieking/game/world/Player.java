@@ -63,8 +63,8 @@ import me.pieking.game.robot.component.StructureComponentSlope;
 import me.pieking.game.robot.component.StructureComponentSquare;
 import me.pieking.game.sound.Sound;
 import me.pieking.game.sound.SoundClip;
-import me.pieking.game.world.GameObjectFilter.FilterType;
 import me.pieking.game.world.Balance.Team;
+import me.pieking.game.world.GameObjectFilter.FilterType;
 
 public class Player {
 

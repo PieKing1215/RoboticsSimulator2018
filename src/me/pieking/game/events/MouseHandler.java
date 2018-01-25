@@ -9,7 +9,6 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
-import me.pieking.game.Game;
 import me.pieking.game.world.GameObject;
 
 public class MouseHandler implements MouseListener, MouseWheelListener{

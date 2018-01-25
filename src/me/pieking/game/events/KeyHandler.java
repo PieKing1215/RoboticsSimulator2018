@@ -17,9 +17,9 @@ import me.pieking.game.Game;
 import me.pieking.game.Vars;
 import me.pieking.game.command.Command;
 import me.pieking.game.robot.Robot;
+import me.pieking.game.world.Balance.Team;
 import me.pieking.game.world.GameWorld;
 import me.pieking.game.world.Player;
-import me.pieking.game.world.Balance.Team;
 
 public class KeyHandler implements KeyListener{
 

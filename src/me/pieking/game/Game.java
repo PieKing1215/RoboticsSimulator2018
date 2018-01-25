@@ -5,27 +5,16 @@ import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.util.List;
-import java.util.Scanner;
 
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import com.sun.javafx.geom.Rectangle;
 
 import me.pieking.game.events.KeyHandler;
 import me.pieking.game.events.MouseHandler;
 import me.pieking.game.gfx.Disp;
 import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Render;
-import me.pieking.game.gfx.ShipFileAccessory;
-import me.pieking.game.gfx.ShipFileView;
 import me.pieking.game.menu.Menu;
 import me.pieking.game.net.ClientStarter;
 import me.pieking.game.net.ServerStarter;
@@ -36,10 +25,10 @@ import me.pieking.game.net.packet.ShipDataPacket;
 import me.pieking.game.robot.Robot;
 import me.pieking.game.scripting.LuaTest;
 import me.pieking.game.sound.Sound;
+import me.pieking.game.world.Balance.Team;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.GameWorld;
 import me.pieking.game.world.Player;
-import me.pieking.game.world.Balance.Team;
 
 public class Game {
 

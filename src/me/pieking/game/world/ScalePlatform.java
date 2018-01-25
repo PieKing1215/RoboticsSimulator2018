@@ -6,7 +6,6 @@ import java.awt.Graphics2D;
 import java.util.List;
 
 import org.dyn4j.dynamics.BodyFixture;
-import org.dyn4j.geometry.Mass;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
