@@ -305,46 +305,48 @@ public class Player {
 //			base.translate(trans);
 //		}
 		
-		if(Game.keyHandler().isPressed(KeyEvent.VK_UP)){
-			float speed = 10f;
-			
-			if(Game.keyHandler().isPressed(KeyEvent.VK_SHIFT)) speed *= 5; 
-			
-			Point2D.Float pt = Utils.polarToCartesian((float) Math.toRadians(Math.toDegrees(base.getTransform().getRotation()) + 90), speed);
-			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(pt.x, pt.y));
-			base.applyForce(vec);
-		}
-		
-		double speedMultiplier = Game.keyHandler().isPressed(KeyEvent.VK_SHIFT) ? 5 : 1;
-		
-		double mechPower = 110 * speedMultiplier;
-		
-		if(Game.keyHandler().isPressed(KeyEvent.VK_W)){
-			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(0, mechPower));
-			base.applyForce(vec);
-		}
-		
-		if(Game.keyHandler().isPressed(KeyEvent.VK_S)){
-			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(0, -mechPower));
-			base.applyForce(vec);
-		}
-		
-		if(Game.keyHandler().isPressed(KeyEvent.VK_A)){
-			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(mechPower, 0));
-			base.applyForce(vec);
-		}
-		
-		if(Game.keyHandler().isPressed(KeyEvent.VK_D)){
-			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(-mechPower, 0));
-			base.applyForce(vec);
-		}
-		
-		if(Game.keyHandler().isPressed(KeyEvent.VK_LEFT)){
-			base.applyTorque(-200 * speedMultiplier);
-		}else if(Game.keyHandler().isPressed(KeyEvent.VK_RIGHT)){
-			base.applyTorque(200 * speedMultiplier);
-		}else{
-			base.setAngularVelocity(base.getAngularVelocity() * 0.001);
+		if(robot.isEnabled()){
+    		if(Game.keyHandler().isPressed(KeyEvent.VK_UP)){
+    			float speed = 10f;
+    			
+    			if(Game.keyHandler().isPressed(KeyEvent.VK_SHIFT)) speed *= 5; 
+    			
+    			Point2D.Float pt = Utils.polarToCartesian((float) Math.toRadians(Math.toDegrees(base.getTransform().getRotation()) + 90), speed);
+    			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(pt.x, pt.y));
+    			base.applyForce(vec);
+    		}
+    		
+    		double speedMultiplier = Game.keyHandler().isPressed(KeyEvent.VK_SHIFT) ? 5 : 1;
+    		
+    		double mechPower = 110 * speedMultiplier;
+    		
+    		if(Game.keyHandler().isPressed(KeyEvent.VK_W)){
+    			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(0, mechPower));
+    			base.applyForce(vec);
+    		}
+    		
+    		if(Game.keyHandler().isPressed(KeyEvent.VK_S)){
+    			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(0, -mechPower));
+    			base.applyForce(vec);
+    		}
+    		
+    		if(Game.keyHandler().isPressed(KeyEvent.VK_A)){
+    			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(mechPower, 0));
+    			base.applyForce(vec);
+    		}
+    		
+    		if(Game.keyHandler().isPressed(KeyEvent.VK_D)){
+    			Vector2 vec = base.getWorldCenter().subtract(base.getWorldCenter().copy().add(-mechPower, 0));
+    			base.applyForce(vec);
+    		}
+    		
+    		if(Game.keyHandler().isPressed(KeyEvent.VK_LEFT)){
+    			base.applyTorque(-200 * speedMultiplier);
+    		}else if(Game.keyHandler().isPressed(KeyEvent.VK_RIGHT)){
+    			base.applyTorque(200 * speedMultiplier);
+    		}else{
+    			base.setAngularVelocity(base.getAngularVelocity() * 0.001);
+    		}
 		}
 //		
 		if(Game.getTime() % 10 == 0 && !dead){
@@ -908,6 +910,16 @@ public class Player {
 			}
 	    }
 		return robot;
+	}
+
+	public Robot getRobot() {
+		return robot;
+	}
+
+	public void setLocation(Point2D pt, double rot) {
+		translateToOrigin();
+		translate(pt.getX(), pt.getY());
+		setRotation(rot);
 	}
 	
 }

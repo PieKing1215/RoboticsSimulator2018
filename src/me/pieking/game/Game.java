@@ -80,6 +80,7 @@ public class Game {
 	
 	/** The active world. */
 	private static GameWorld gw;
+	public static Gameplay gameplay;
 	
 	/**
 	 * Run the game with arguments
@@ -213,6 +214,7 @@ public class Game {
 		Fonts.init();
 		
 		gw = new GameWorld();
+		gameplay = new Gameplay();
 		
 		while(!ClientStarter.hasEnteredIp){
 			try {
@@ -261,6 +263,7 @@ public class Game {
 		frame.setTitle(NAME + (isServer() ? " (Server) " : "") + " v" + VERSION + " | " + fps + " FPS " + tps + " TPS");
 		
 		try{
+			gameplay.tick();
 			gw.tick();
 		}catch(Exception e){
 			e.printStackTrace();
