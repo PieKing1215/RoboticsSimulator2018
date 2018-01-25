@@ -235,7 +235,7 @@ public class Player {
     				scm = new SelectComponentMenu(createPreviewComponents());
     				Render.showMenu(scm);
     				hoverGrid = new Point(-1, -1);
-    			}else if(cm == null || !cm.insideMenu(Game.mouseLoc())){
+    			}else if((cm == null || !cm.insideMenu(Game.mouseLoc())) && Robot.buildMode){
     				Point prevGrid = selectedGrid;
     				selectedGrid = hoverGrid;
     				Component cmp = robot.getComponent(selectedGrid);
@@ -522,7 +522,7 @@ public class Player {
     			for(int y = 0; y < gridSize; y++){
     				g.setColor(c1);
     				
-    				if(hoverGrid.x == x && hoverGrid.y == y){
+    				if(hoverGrid.x == x && hoverGrid.y == y && Robot.buildMode){
     					
     					Component c = robot.getComponent(hoverGrid);
     					if(c != null){
