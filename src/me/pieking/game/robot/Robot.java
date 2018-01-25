@@ -171,11 +171,6 @@ public class Robot {
 		trans.scale(GameObject.SCALE, GameObject.SCALE);
 //		trans.rotate(pl.base.getTransform().getRotation(), pl.getLocation().x, pl.getLocation().y);
 		
-		boolean shieldImg = Game.getTime() % 60 >= 30;
-		shieldImg = true;
-		
-//		if(shieldImg) trans.translate(pl.getLocation().x, pl.getLocation().y);
-		
 		g.setTransform(trans);
 	
 	    g.setStroke(new BasicStroke(1f));
@@ -198,11 +193,6 @@ public class Robot {
 		
 		trans.concatenate(oldtrans);
 //		trans.rotate(pl.base.getTransform().getRotation(), pl.getLocation().x, pl.getLocation().y);
-		
-		boolean shieldImg = Game.getTime() % 60 >= 30;
-		shieldImg = true;
-		
-//		if(shieldImg) trans.translate(pl.getLocation().x, pl.getLocation().y);
 		
 		g.setTransform(trans);
 	

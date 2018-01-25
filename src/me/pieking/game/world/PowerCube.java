@@ -9,7 +9,6 @@ import org.dyn4j.geometry.Mass;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
-import me.pieking.game.Game;
 import me.pieking.game.Location;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.gfx.Spritesheet;
@@ -67,11 +66,7 @@ public class PowerCube {
 	}
 	
 	public void render(Graphics2D g){
-		if(Game.getTime() % 30 >= 15 || true){
-			base.render(g, new BasicStroke(1f), spr, (int)(Component.unitSize * 4), (int)(Component.unitSize * 4));
-		}else{
-			base.render(g);
-		}
+		base.render(g, new BasicStroke(1f), spr, (int)(Component.unitSize * 4), (int)(Component.unitSize * 4));
 	}
 	
 }

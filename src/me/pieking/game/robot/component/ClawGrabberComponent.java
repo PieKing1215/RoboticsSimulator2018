@@ -45,9 +45,6 @@ public class ClawGrabberComponent extends ActivatableComponent {
 	public GameObject createBody(Player player){
 		this.pl = player; 
 		
-		float xSize = unitSize * 2;
-		float ySize = unitSize;
-		
 		GameObject base = new GameObject();
 		base.setAutoSleepingEnabled(false);
 		base.color = Color.GRAY;
