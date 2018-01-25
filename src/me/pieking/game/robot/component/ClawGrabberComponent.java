@@ -2,7 +2,6 @@ package me.pieking.game.robot.component;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
 
 import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.AABB;
@@ -12,11 +11,7 @@ import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Transform;
 import org.dyn4j.geometry.Vector2;
 
-import com.sun.org.apache.bcel.internal.generic.NEWARRAY;
-import com.sun.swing.internal.plaf.basic.resources.basic;
-
 import me.pieking.game.Game;
-import me.pieking.game.gfx.AnimatedImage;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.gfx.Spritesheet;
 import me.pieking.game.world.GameObject;
@@ -49,9 +44,6 @@ public class ClawGrabberComponent extends ActivatableComponent {
 	@Override
 	public GameObject createBody(Player player){
 		this.pl = player; 
-		
-		float xSize = unitSize * 2;
-		float ySize = unitSize;
 		
 		GameObject base = new GameObject();
 		base.setAutoSleepingEnabled(false);

@@ -1,10 +1,5 @@
 package me.pieking.game.net.packet;
 
-import java.util.Base64;
-
-import org.dyn4j.geometry.Transform;
-import org.dyn4j.geometry.Vector2;
-
 import me.pieking.game.Game;
 import me.pieking.game.world.Player;
 

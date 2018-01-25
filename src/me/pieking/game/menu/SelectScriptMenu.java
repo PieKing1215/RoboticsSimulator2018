@@ -10,7 +10,6 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import me.pieking.game.FileSystem;

@@ -3,8 +3,8 @@ package me.pieking.game.net.packet;
 import java.awt.Color;
 
 import me.pieking.game.Game;
-import me.pieking.game.world.Player;
 import me.pieking.game.world.Balance.Team;
+import me.pieking.game.world.Player;
 
 public class JoinPacket extends Packet {
 

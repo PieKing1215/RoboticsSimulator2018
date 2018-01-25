@@ -1,8 +1,6 @@
 package me.pieking.game.net;
 
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -231,29 +231,24 @@ public class GameObject extends Body {
 		// loop over all the body fixtures for this body
 		List<BodyFixture> bffs = new ArrayList<>();
 		bffs.addAll(fixtures);
-		for (BodyFixture fixture : bffs) {
-			// get the shape on the fixture
-			Convex convex = fixture.getShape();
-			//System.out.println(convex.getClass());
 			
-			Stroke st = g.getStroke();
-			g.setStroke(str);
-			scale += 2;
-			
-			int w = (int)(Component.unitSize * scale * sprW);
-			int h = (int)(Component.unitSize * scale * sprH);
-			
-			g.drawImage(spr.getImage(), -(int)(Component.unitSize/2 * scale), -(int)(Component.unitSize/2 * scale), w, h, null);
-			Shape s = spr.getShape();
-			AffineTransform tra = AffineTransform.getTranslateInstance(-(int)(Component.unitSize/2 * scale), -(int)(Component.unitSize/2 * scale));
-			tra.scale(w/(double)spr.getWidth(), h/(double)spr.getHeight());
-			s = tra.createTransformedShape(s);
-			
-			g.setColor(col);
-			g.fill(s);
+		Stroke st = g.getStroke();
+		g.setStroke(str);
+		scale += 2;
+		
+		int w = (int)(Component.unitSize * scale * sprW);
+		int h = (int)(Component.unitSize * scale * sprH);
+		
+		g.drawImage(spr.getImage(), -(int)(Component.unitSize/2 * scale), -(int)(Component.unitSize/2 * scale), w, h, null);
+		Shape s = spr.getShape();
+		AffineTransform tra = AffineTransform.getTranslateInstance(-(int)(Component.unitSize/2 * scale), -(int)(Component.unitSize/2 * scale));
+		tra.scale(w/(double)spr.getWidth(), h/(double)spr.getHeight());
+		s = tra.createTransformedShape(s);
+		
+		g.setColor(col);
+		g.fill(s);
 //			Graphics2DRenderer.render(g, convex, scale, color);
-			g.setStroke(st);
-		}
+		g.setStroke(st);
 		
 		g.setComposite(c);
 		
@@ -304,20 +299,12 @@ public class GameObject extends Body {
 		}
 		
 		// loop over all the body fixtures for this body
-		for (BodyFixture fixture : this.fixtures) {
-			// get the shape on the fixture
-			Convex convex = fixture.getShape();
-			//System.out.println(convex.getClass());
-			
-			Stroke st = g.getStroke();
-			g.setStroke(str);
-			scale += 2;
-			g.drawImage(spr.getImage(), -(int)(Component.unitSize/2 * scale), -(int)(Component.unitSize/2 * scale), (int)(Component.unitSize * scale * sprW), (int)(Component.unitSize * scale * sprH), null);
+		Stroke st = g.getStroke();
+		g.setStroke(str);
+		scale += 2;
+		g.drawImage(spr.getImage(), -(int)(Component.unitSize/2 * scale), -(int)(Component.unitSize/2 * scale), (int)(Component.unitSize * scale * sprW), (int)(Component.unitSize * scale * sprH), null);
 //			Graphics2DRenderer.render(g, convex, scale, color);
-			g.setStroke(st);
-			
-			break; //HACK: only render the first one
-		}
+		g.setStroke(st);
 		
 		g.setComposite(c);
 		
