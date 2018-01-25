@@ -28,6 +28,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
+import org.dyn4j.dynamics.Force;
+import org.dyn4j.dynamics.Torque;
 import org.dyn4j.dynamics.joint.WeldJoint;
 import org.dyn4j.geometry.Circle;
 import org.dyn4j.geometry.Mass;
@@ -63,8 +65,8 @@ import me.pieking.game.robot.component.StructureComponentSlope;
 import me.pieking.game.robot.component.StructureComponentSquare;
 import me.pieking.game.sound.Sound;
 import me.pieking.game.sound.SoundClip;
-import me.pieking.game.world.GameObjectFilter.FilterType;
 import me.pieking.game.world.Balance.Team;
+import me.pieking.game.world.GameObjectFilter.FilterType;
 
 public class Player {
 
@@ -102,6 +104,9 @@ public class Player {
 	public boolean noClip = false;
 	
 	public Team team = Team.NONE;
+	
+	private List<Torque> torquequeue = new ArrayList<Torque>();
+	private List<Force> forceQueue = new ArrayList<Force>();
 	
 	public Player(String name, double x, double y, Team team) {
 		this.team = team;
@@ -176,6 +181,36 @@ public class Player {
     		if(this == Game.getWorld().getSelfPlayer()){
     			tickControls();
     		}
+    		
+    		List<Torque> torque = new ArrayList<Torque>();
+    		torque.addAll(torquequeue);
+    		for(Torque t : torque) {
+    			if(t == null) continue; 
+    			base.applyTorque(t);
+    			torquequeue.remove(t);
+    		}
+    		
+    		List<Force> Force = new ArrayList<Force>();
+    		Force.addAll(forceQueue);
+    		for(Force t : Force) {
+    			if(t == null) continue; 
+    			base.applyForce(t);
+    			forceQueue.remove(t);
+    		}
+    		
+//    		if(robot.getAutonScript() != null && robot.getAutonScript().isRunning()) {
+//    			LuaThread ltr = robot.getAutonScript().thread;
+//    			new Thread(() -> {
+//    				ltr.state.lua_yield(LuaValue.NIL);
+//    				try {
+//						Thread.sleep(100);
+//					} catch (InterruptedException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//    				ltr.state.lua_resume(ltr, LuaValue.NIL);
+//    			}).start();
+//    		}
     
     //		if(Game.getTime() % 600 == 0 && ship != null){
     //			constructShip();
@@ -899,13 +934,13 @@ public class Player {
 	    if(returnVal == JFileChooser.APPROVE_OPTION) {
 	    	try {
 	    		return Robot.load(chooser.getSelectedFile(), this);
-			}catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
+			}catch (Exception e) {
 				e.printStackTrace();
 			}
 	    }else{
 	    	try {
 	    		return Robot.load("new", this);
-			}catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
+			}catch (Exception e) {
 				e.printStackTrace();
 			}
 	    }
@@ -920,6 +955,18 @@ public class Player {
 		translateToOrigin();
 		translate(pt.getX(), pt.getY());
 		setRotation(rot);
+	}
+	
+	public void queueTorque(Torque torque) {
+		torquequeue.add(torque);
+	}
+	
+	public void queueForce(Force force) {
+		forceQueue.add(force);
+	}
+
+	public double getRotation() {
+		return base.getTransform().getRotation();
 	}
 	
 }

@@ -16,8 +16,9 @@ import java.util.List;
 import me.pieking.game.FileSystem;
 import me.pieking.game.Game;
 import me.pieking.game.gfx.Fonts;
+import me.pieking.game.robot.Robot;
 import me.pieking.game.robot.component.ComputerComponent;
-import me.pieking.game.scripting.LuaTest;
+import me.pieking.game.scripting.LuaScriptLoader;
 
 public class SelectScriptMenu extends Menu {
 
@@ -28,14 +29,14 @@ protected List<EToggle> toggles = new ArrayList<EToggle>();
 	String selected;
 	Point hover = new Point(0, 0);
 
-	ComputerComponent comp;
+	Robot robot;
 	
 	private boolean wasLeftPressed = true;
 	
-	public SelectScriptMenu(ComputerComponent comp) {
+	public SelectScriptMenu(Robot robot) {
 		super(new Color(0, 0, 0, 0));
 		avail = getAvailableScripts();
-		this.comp = comp;
+		this.robot = robot;
 	}
 	
 	private List<String> getAvailableScripts() {
@@ -111,7 +112,7 @@ protected List<EToggle> toggles = new ArrayList<EToggle>();
 				boolean hover = r.contains(Game.mouseLoc());
 				if(index > 0 && index <= avail.size()){
 					
-					if(comp.script != null && avail.get(index-1).equals(comp.script.name)){
+					if(robot.getAutonScript() != null && avail.get(index-1).equals(robot.getAutonScript().name)){
 						if(hover){
 							g.setColor(new Color(0.4f, 0.6f, 0.4f, 0.5f));
 						}else{
@@ -258,32 +259,11 @@ protected List<EToggle> toggles = new ArrayList<EToggle>();
 			if(selected != null){
 				System.out.println("selected: " + selected);
 				if(selected.equals("None")){
-					comp.script = null;
+					robot.setAutonScript(null);
 				}else{
-					comp.script = LuaTest.runScript(selected);
+					robot.setAutonScript(LuaScriptLoader.runScript(selected));
 				}
-//				KeyListener kl = new KeyListener() {
-//					@Override
-//					public void keyTyped(KeyEvent e) {
-//						
-//					}
-//					
-//					@Override
-//					public void keyReleased(KeyEvent e) {
-//						
-//					}
-//					
-//					@Override
-//					public void keyPressed(KeyEvent e) {
-//						System.out.println(e.getKeyCode());
-//						if(!keys.contains(e.getKeyCode()) && e.getKeyCode() != KeyEvent.VK_ESCAPE) keys.add(e.getKeyCode());
-//						waitKeyPress = false;
-//						Game.getDisp().removeKeyListener(this);
-//					}
-//				};
-//				Game.getDisp().addKeyListener(kl);
-			}else{
-//				comp.script = LuaTest.runScript(selected);
+			
 				close();
 			}
 		}

@@ -15,6 +15,7 @@ import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Render;
 import me.pieking.game.menu.SelectScriptMenu;
 import me.pieking.game.robot.Robot;
+import me.pieking.game.scripting.LuaScript;
 import me.pieking.game.world.Balance.Team;
 import me.pieking.game.world.GameWorld;
 import me.pieking.game.world.Player;
@@ -201,7 +202,6 @@ public class Gameplay {
 				
 				int scoreBoardY = Game.getHeight()/2 + (int)(50 * thru);
 				
-				System.out.println(thru);
 				g.setFont(Fonts.pixelLCD.deriveFont(150f * thru));
 	    		
 	    		int colonWidth = g.getFontMetrics().stringWidth(":")/2;
@@ -357,7 +357,7 @@ public class Gameplay {
 				
 				for(int i = 0; i < Math.min(redPlayers.size(), 3); i++){
 					Player p = redPlayers.get(i);
-					p.setLocation(redSpawns[i], Math.toRadians(-90));
+					p.setLocation(redSpawns[i], Math.toRadians(90));
 				}
 				for(int i = 0; i < Math.min(bluePlayers.size(), 3); i++){
 					Player p = bluePlayers.get(i);
@@ -379,12 +379,16 @@ public class Gameplay {
 			case AUTON:
 				gameTime = 15 * 60; // 15s
 				Robot.setAllEnabled(false);
-				Game.getWorld().getSelfPlayer().getRobot().getAutonScript().run();
+				LuaScript ls = Game.getWorld().getSelfPlayer().getRobot().getAutonScript();
+				if(ls != null) ls.run();
+				
 				break;
 			case TELEOP:
 				gameTime = 135 * 60; // 2m 15s
 				Robot.setAllEnabled(true);
-				Game.getWorld().getSelfPlayer().getRobot().getAutonScript().stop();
+				LuaScript ls2 = Game.getWorld().getSelfPlayer().getRobot().getAutonScript();
+				if(ls2 != null) ls2.stop();
+				
 				break;
 			case MATCH_END:
 				gameTime = 10 * 60; // 2m 15s

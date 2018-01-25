@@ -567,5 +567,13 @@ public class Robot {
 			p.getRobot().setEnabled(enabled);
 		}
 	}
+
+	public LuaScript getAutonScript() {
+		return autonScript;
+	}
+
+	public void setAutonScript(LuaScript autonScript) {
+		this.autonScript = autonScript;
+	}
 	
 }

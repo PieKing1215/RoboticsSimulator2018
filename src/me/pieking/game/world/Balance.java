@@ -113,15 +113,21 @@ public class Balance {
 		ownership_override = team;
 	}
 	
+	public Team getTopTeam() {
+		return blue.y > red.y ? Team.RED : Team.BLUE;
+	}
+	
 	public static enum Team {
 		NONE (Color.GRAY),
 		BLUE (Color.decode("#0066b3")),
 		RED  (Color.decode("#ed1c24"));
 		
-		Color color;
+		public final Color color;
+		
 		private Team(Color col) {
 			color = col;
 		}
+		
 		public Team getOpposite() {
 			return this == BLUE ? RED : (this == RED ? BLUE : NONE);
 		}

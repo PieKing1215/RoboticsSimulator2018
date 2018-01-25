@@ -1110,4 +1110,8 @@ public class GameWorld {
 		this.cameraCentered = cameraCentered;
 	}
 
+	public Scale getScale() {
+		return scale;
+	}
+
 }
