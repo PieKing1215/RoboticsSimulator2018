@@ -34,7 +34,7 @@ import me.pieking.game.net.packet.LeavePacket;
 import me.pieking.game.net.packet.Packet;
 import me.pieking.game.net.packet.ShipDataPacket;
 import me.pieking.game.robot.Robot;
-import me.pieking.game.scripting.LuaTest;
+import me.pieking.game.scripting.LuaScriptLoader;
 import me.pieking.game.sound.Sound;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.GameWorld;
@@ -80,6 +80,7 @@ public class Game {
 	
 	/** The active world. */
 	private static GameWorld gw;
+	public static Gameplay gameplay;
 	
 	/**
 	 * Run the game with arguments
@@ -184,9 +185,13 @@ public class Game {
 			
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if(!isServer() && ClientStarter.clientStarter.getClient().isConnected()){
-    				LeavePacket pack = new LeavePacket(gw.getSelfPlayer().name);
-    				sendPacket(pack);
+				try{
+    				if(!isServer() && ClientStarter.clientStarter.getClient().isConnected()){
+        				LeavePacket pack = new LeavePacket(gw.getSelfPlayer().name);
+        				sendPacket(pack);
+    				}
+				}catch(Exception e2){
+					e2.printStackTrace();
 				}
 				
 				System.exit(0);
@@ -208,11 +213,12 @@ public class Game {
 		
 		frame.setVisible(true);
 		
-		LuaTest.init();
+		LuaScriptLoader.init();
 		Sound.init();
 		Fonts.init();
 		
 		gw = new GameWorld();
+		gameplay = new Gameplay();
 		
 		while(!ClientStarter.hasEnteredIp){
 			try {
@@ -261,6 +267,7 @@ public class Game {
 		frame.setTitle(NAME + (isServer() ? " (Server) " : "") + " v" + VERSION + " | " + fps + " FPS " + tps + " TPS");
 		
 		try{
+			gameplay.tick();
 			gw.tick();
 		}catch(Exception e){
 			e.printStackTrace();

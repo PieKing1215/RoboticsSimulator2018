@@ -7,8 +7,8 @@ public class TeamProperties {
 	private GameObject exchangeSensor;
 	private int cubeStorage = 0;
 	private HashMap<Pentalty, Integer> penalties = new HashMap<Pentalty, Integer>();
-	private int switchScoreMod = 0;
-	private int scaleScoreMod = 0;
+	private int switchScoreMod = 1;
+	private int scaleScoreMod = 1;
 	private int score = 0;
 	private boolean usedLevitate = false;
 

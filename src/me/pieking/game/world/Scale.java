@@ -6,20 +6,30 @@ import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Rectangle;
 
+import me.pieking.game.gfx.LEDStrip;
+import me.pieking.game.gfx.LEDStrip.StripMode;
 import me.pieking.game.robot.component.Component;
 
 public class Scale extends Balance {
 
-	public Scale(double x, double y, boolean blueTop) {
-		super(x, y, blueTop);
-		red = new ScalePlatform(x, y - 4.75);
-		blue = new ScalePlatform(x, y + 4.75);
+	public Scale(double x, double y, boolean blueTop, LEDStrip ledStripTop, LEDStrip ledStripBottom) {
+		super(x, y, blueTop, ledStripTop, ledStripBottom);
+		red = new ScalePlatform(x, y - 4.75, ledStripTop);
+		blue = new ScalePlatform(x, y + 4.75, ledStripBottom);
+		
+		red.ledXofs = -1;
+		red.ledYofs = -1;
+		blue.ledXofs = -1;
+		blue.ledYofs = -1;
 		
 		if(blueTop){
 			ScalePlatform temp = red;
 			red = blue;
 			blue = temp;
 		}
+
+		red.strip.setMode(StripMode.SOLID_RED_FULL);
+		blue.strip.setMode(StripMode.SOLID_BLUE_FULL);
 		
 		walls = new GameObject();
 //		walls.type = BodyType.DEFAULT;

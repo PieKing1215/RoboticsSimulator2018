@@ -15,6 +15,7 @@ import java.util.List;
 
 import me.pieking.game.Game;
 import me.pieking.game.Vars;
+import me.pieking.game.Gameplay.GameState;
 import me.pieking.game.command.Command;
 import me.pieking.game.robot.Robot;
 import me.pieking.game.world.GameWorld;
@@ -90,6 +91,10 @@ public class KeyHandler implements KeyListener{
 				Game.getWorld().useLevitate(e.isControlDown() ? Team.RED : Team.BLUE);
 			}else if(e.getKeyCode() == KeyEvent.VK_NUMPAD4){
 				Vars.showCollision = !Vars.showCollision;
+			}
+			
+			if(e.getKeyCode() == KeyEvent.VK_V && Game.gameplay.getState() == GameState.WAITING_FOR_PLAYERS){
+				Game.gameplay.voteToStart(Game.getWorld().getSelfPlayer());
 			}
 			
 		}

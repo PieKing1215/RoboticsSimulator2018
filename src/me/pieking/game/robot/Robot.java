@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
 
 import me.pieking.game.FileSystem;
@@ -31,6 +32,7 @@ import me.pieking.game.Location;
 import me.pieking.game.net.packet.ShipComponentActivatePacket;
 import me.pieking.game.robot.component.ActivatableComponent;
 import me.pieking.game.robot.component.Component;
+import me.pieking.game.scripting.LuaScript;
 import me.pieking.game.world.GameObject;
 import me.pieking.game.world.Player;
 
@@ -43,6 +45,10 @@ public class Robot {
 	List<Component> comp = new ArrayList<>();
 	
 	Player pl;
+	
+	private boolean enabled = true;
+	
+	private LuaScript autonScript;
 	
 	public Robot(int size, List<Component> comp, Player pl) {
 		this.comp = comp;
@@ -537,6 +543,37 @@ public class Robot {
 			if(type.isAssignableFrom(c.getClass())) ct++;
 		}
 		return ct;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+		
+		System.out.println("enabled = " + enabled);
+		if(!enabled){
+			for(Component c : getComponents()){
+				if(c instanceof ActivatableComponent){
+					((ActivatableComponent) c).deactivate();
+				}
+			}
+		}
+	}
+	
+	public static void setAllEnabled(boolean enabled){
+		for(Player p : Game.getWorld().getPlayers()){
+			p.getRobot().setEnabled(enabled);
+		}
+	}
+
+	public LuaScript getAutonScript() {
+		return autonScript;
+	}
+
+	public void setAutonScript(LuaScript autonScript) {
+		this.autonScript = autonScript;
 	}
 	
 }

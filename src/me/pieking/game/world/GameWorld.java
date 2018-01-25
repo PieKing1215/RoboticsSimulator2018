@@ -3,12 +3,11 @@ package me.pieking.game.world;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Shape;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,18 +15,19 @@ import java.util.List;
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.dynamics.World;
-import org.dyn4j.geometry.MassType;
-import org.dyn4j.geometry.Polygon;
 import org.dyn4j.geometry.Rectangle;
 import org.dyn4j.geometry.Triangle;
 import org.dyn4j.geometry.Vector2;
 
 import me.pieking.game.Game;
+import me.pieking.game.Gameplay;
 import me.pieking.game.Rand;
 import me.pieking.game.Scheduler;
 import me.pieking.game.Vars;
+import me.pieking.game.Gameplay.GameState;
 import me.pieking.game.gfx.Fonts;
 import me.pieking.game.gfx.Images;
+import me.pieking.game.gfx.LEDStrip;
 import me.pieking.game.gfx.Sprite;
 import me.pieking.game.robot.Robot;
 import me.pieking.game.robot.component.Component;
@@ -64,8 +64,6 @@ public class GameWorld {
 	private double fieldXofs = 28.1;
 	private double fieldYofs = 11;
 
-	private int gameTime = ((2 * 60) + 30) * 60;
-	
 	private HashMap<Team, TeamProperties> teamProperties = new HashMap<Balance.Team, TeamProperties>();
 	
 	private static Vector2 mouseWorldPos = new Vector2();
@@ -88,6 +86,8 @@ public class GameWorld {
 	public int power_force_level_red = 0;
 	public int power_force_level_blue = 0;
 	
+	private boolean cameraCentered = false;
+	
 	public GameWorld(){
 		initializeWorld();
 		getWorld().addListener(new GameListener());
@@ -106,7 +106,7 @@ public class GameWorld {
 	 * </ul></p>
 	 */
 	public void initializeWorld() {
-		this.world = new World();
+		if(this.world == null) this.world = new World();
 		getWorld().setGravity(new Vector2(0, 0));
 		
 		// top
@@ -268,11 +268,18 @@ public class GameWorld {
 		
 		boolean[] switchOrientation = getRandomSwitchOrientation();
 		
-		Switch blueSwitch = new Switch(10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[0]);
+		LEDStrip srr = new LEDStrip(50);
+		LEDStrip srb = new LEDStrip(50);
+		LEDStrip sbr = new LEDStrip(50);
+		LEDStrip sbb = new LEDStrip(50);
+		LEDStrip sr = new LEDStrip(50);
+		LEDStrip sb = new LEDStrip(50);
+		
+		Switch blueSwitch = new Switch(10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[0], sbr, sbb);
 		addScale(blueSwitch);
-		scale = new Scale(0.07 + fieldXofs, 0 + fieldYofs, switchOrientation[1]);
+		scale = new Scale(0.07 + fieldXofs, 0 + fieldYofs, switchOrientation[1], sr, sb);
 		addScale(scale);
-		Switch redSwitch = new Switch(-10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[2]);
+		Switch redSwitch = new Switch(-10.15 + fieldXofs, 0 + fieldYofs, switchOrientation[2], srr, srb);
 		addScale(redSwitch);
 
 		teamProperties.put(Team.RED, new TeamProperties(redSwitch, redExchangeSensor));
@@ -325,8 +332,7 @@ public class GameWorld {
 		g.transform(ofs);
 		
 		
-		
-		g.drawImage(getFieldImage().getImage(), 0, 0, (int)(getFieldImage().getWidth() * GameObject.SCALE * 0.05 * FIELD_SCALE), (int)(getFieldImage().getHeight() * GameObject.SCALE * 0.05 * FIELD_SCALE), null);
+		g.drawImage(field.getImage(), 0, 0, (int)(getFieldImage().getWidth() * GameObject.SCALE * 0.05 * FIELD_SCALE), (int)(getFieldImage().getHeight() * GameObject.SCALE * 0.05 * FIELD_SCALE), null);
 		
 		// render the things!!!
 		// each list is cached before iteration to avoid ConcurrentModificationExceptions
@@ -364,10 +370,12 @@ public class GameWorld {
 			if(o != null) o.render(g);
 		}
 		
-		List<Player> pl = new ArrayList<Player>();
-		pl.addAll(players);
-		for(Player p : pl){
-			if(p != null) p.render(g);
+		if(Game.gameplay.getState() != GameState.WAITING_FOR_PLAYERS){
+    		List<Player> pl = new ArrayList<Player>();
+    		pl.addAll(players);
+    		for(Player p : pl){
+    			if(p != null) p.render(g);
+    		}
 		}
 		
 		if(Vars.showCollision){
@@ -377,7 +385,7 @@ public class GameWorld {
 		
 		g.setTransform(ot);
 		
-		renderHUD(g);
+		Game.gameplay.renderHUD(g);
 	}
 	
 	/**
@@ -453,7 +461,7 @@ public class GameWorld {
 		
 		g.setTransform(ot);
 		
-		renderHUD(g);
+		Game.gameplay.renderHUD(g);
 		
 		GameObject.SCALE = realScale;
 	}
@@ -474,135 +482,6 @@ public class GameWorld {
 		trans.concatenate(ofs);
 		
 		return trans;
-	}
-	
-	/**
-	 * Renders the HUD, including game time, scores, active power ups, power cube storage, etc.
-	 * @param g - the {@link Graphics2D} to render onto.
-	 */
-	private void renderHUD(Graphics2D g) {
-		
-		if(Robot.buildMode){
-			g.setFont(Fonts.gamer.deriveFont(40f));
-			g.setColor(Color.WHITE);
-			g.drawString("BUILD MODE", 10, 44);
-			
-			
-			g.setColor(new Color(0.2f, 0.2f, 0.2f, 0.7f));
-			g.fillRect(Game.getWidth() - 100, Game.getHeight() - 100, 100, 100);
-			
-			Player p = Game.getWorld().getSelfPlayer();
-			if(p != null){
-				if(p.buildSelected != null && p.buildPreview != null){
-					AffineTransform trans = g.getTransform();
-					g.translate(Game.getWidth() - 50, Game.getHeight() - 50);
-					p.buildPreview.renderScaled(g);
-					g.setTransform(trans);
-					
-					String num = "" + p.inventory.get(p.buildSelected);
-					
-					g.setFont(Fonts.pixelmix.deriveFont(20f));
-					int x = Game.getWidth() - g.getFontMetrics().stringWidth(num) - 8;
-					
-					GlyphVector gv = g.getFont().createGlyphVector(g.getFontRenderContext(), num);
-					Shape shape = gv.getOutline();
-					g.setStroke(new BasicStroke(4.0f));
-					g.setColor(Color.BLACK);
-					g.translate(x, Game.getHeight() - 10);
-					g.draw(shape);
-					
-					g.setStroke(new BasicStroke(1.0f));
-					g.setColor(Color.WHITE);
-					g.drawString(num, 0, 0);
-					
-					g.setTransform(trans);
-				}
-				
-			}
-		}
-		
-//		System.out.println(power_boost + " " + power_boost_queued);
-		
-		g.setFont(Fonts.pixelmix.deriveFont(20f));
-		
-		if(power_boost != Team.NONE){
-			g.setColor(power_boost.color);
-			String s = "boost (" + (power_boost_timer / 60) + ")";
-			if(power_boost_queued != Team.NONE) s += " (" + power_boost_queued + " queued)";
-			g.drawString(s, 10, Game.getHeight() - 20);
-		}
-		
-		if(power_force != Team.NONE){
-			g.setColor(power_force.color);
-			String s = "force (" + (power_force_timer / 60) + ")";
-			if(power_force_queued != Team.NONE) s += " (" + power_force_queued + " queued)";
-			g.drawString(s, 10, Game.getHeight() - 40);
-		}
-
-		
-		int scoreBoardY = 80;
-		
-		g.setColor(new Color(0.4f, 0.4f, 0.4f, 0.7f));
-		g.fillRoundRect(Game.getWidth()/2 - 150, -50, 300, 140, 50, 50);
-		g.setColor(new Color(0.2f, 0.2f, 0.2f, 0.7f));
-		g.setStroke(new BasicStroke(2f));
-		g.drawRoundRect(Game.getWidth()/2 - 150, -50, 300, 140, 50, 50);
-		g.setStroke(new BasicStroke(1f));
-		
-//		g.drawLine(Game.getWidth()/2, 0, Game.getWidth()/2, 100);
-		
-		
-		g.setFont(Fonts.pixelLCD.deriveFont(40f));
-		
-		// game time
-
-		double time = gameTime / 60;
-		
-		int seconds = (int) (time % 60);
-		String secondsStr = (seconds < 10 ? "0" : "") + seconds; 
-		int minutes = (int) (time / 60);
-		String minutesStr = "" + minutes; 
-		
-		String timeS = minutesStr + ":" + secondsStr;
-		g.setColor(Color.DARK_GRAY);
-		g.drawString(timeS, Game.getWidth()/2 - g.getFontMetrics().stringWidth(timeS)/2 - 3, scoreBoardY - 34 - 3);
-		g.setColor(getSelfPlayer().team.color);
-		g.drawString(timeS, Game.getWidth()/2 - g.getFontMetrics().stringWidth(timeS)/2, scoreBoardY - 34);
-		
-		g.setFont(Fonts.pixelLCD.deriveFont(28f));
-		
-		// scoreboard
-		
-		int colonWidth = g.getFontMetrics().stringWidth(":")/2;
-		
-		g.setColor(Color.DARK_GRAY);
-		int redScore = getScoreWithPenalites(Team.RED);
-		int blueScore = getScoreWithPenalites(Team.BLUE);
-		g.drawString("" + redScore, Game.getWidth()/2 - (colonWidth) - g.getFontMetrics().stringWidth("" + redScore) - 3, scoreBoardY - 3);
-		g.setColor(Team.RED.color);
-		g.drawString("" + redScore, Game.getWidth()/2 - (colonWidth) - g.getFontMetrics().stringWidth("" + redScore), scoreBoardY);
-		
-		g.setColor(Color.DARK_GRAY);
-		g.drawString(":", Game.getWidth()/2 - g.getFontMetrics().stringWidth(":")/2 - 3, scoreBoardY - 3);
-		g.setColor(blueScore > redScore ? Team.BLUE.color : Team.RED.color);
-		g.drawString(":", Game.getWidth()/2 - g.getFontMetrics().stringWidth(":")/2, scoreBoardY);
-		
-		g.setColor(Color.DARK_GRAY);
-		g.drawString("" + blueScore, Game.getWidth()/2 + (colonWidth) - 3, scoreBoardY - 3);
-		g.setColor(Team.BLUE.color);
-		g.drawString("" + blueScore, Game.getWidth()/2 + (colonWidth), scoreBoardY);
-		
-		
-		// power cube storage
-		
-		g.drawImage(PowerCube.spr.getImage(), Game.getWidth() - 80, Game.getHeight() - 80, 60, 60, null);
-		int numCubes = getProperties(getSelfPlayer().team).getCubeStorage();
-		g.setFont(Fonts.pixeled.deriveFont(14f));
-		g.setColor(Color.DARK_GRAY);
-		g.drawString("" + numCubes, Game.getWidth() - 80 + 53, Game.getHeight() - 80 + 65);
-		g.setColor(Color.WHITE);
-		g.drawString("" + numCubes, Game.getWidth() - 80 + 55, Game.getHeight() - 80 + 67);
-		
 	}
 
 	/**
@@ -630,65 +509,77 @@ public class GameWorld {
     		yOffset = -selfPlayer.base.getWorldCenter().y * GameObject.SCALE + Game.getDisp().realHeight/2;
 		}
 		
+		if(cameraCentered){
+			
+			GameObject.SCALE = 24;
+			
+			int fw = (int)(getFieldImage().getWidth() * GameObject.SCALE * 0.05 * FIELD_SCALE);
+			int fh = (int)(getFieldImage().getHeight() * GameObject.SCALE * 0.05 * FIELD_SCALE);
+			
+			xOffset = -fw/2;
+			xOffset += Game.getWidth()/2;
+			yOffset = -fh/2;
+			yOffset += Game.getHeight()/2;
+		}
+		
 		xOffset = (Math.round((float)(xOffset*100f))/100f);
 		yOffset = (Math.round((float)(yOffset*100f))/100f);
 		
-		// decrease the remaining game time if its more than 0
-		if(gameTime > 0) gameTime--;
-		
 		// power ups
 		
-		if(power_boost_timer > 0){
-			if(power_boost_level % 2 == 0){ // 0 or 2
-    			if(power_boost == Team.RED) getProperties(Team.RED).setSwitchScoreMod(2);
-    			if(power_boost == Team.BLUE) getProperties(Team.BLUE).setSwitchScoreMod(2);
-			}
-			
-			if(power_boost_level >= 1){ // 1 or 2
-				if(power_boost == Team.RED) getProperties(Team.RED).setScaleScoreMod(2);
-    			if(power_boost == Team.BLUE) getProperties(Team.BLUE).setScaleScoreMod(2);
-			}
-			
-			power_boost_timer--;
-			if(power_boost_timer == 0){
-				getProperties(Team.RED).setSwitchScoreMod(2);
-				getProperties(Team.RED).setScaleScoreMod(2);
-				getProperties(Team.BLUE).setSwitchScoreMod(2);
-				getProperties(Team.BLUE).setScaleScoreMod(2);
-				
-				power_boost = Team.NONE;
-				if(power_boost_queued != Team.NONE){
-					forceBoost(power_boost_queued);
-					power_boost_queued = Team.NONE;
-				}
-			}
+		if(Game.gameplay.getState() == GameState.AUTON || Game.gameplay.getState() == GameState.TELEOP) {
+    		if(power_boost_timer > 0){
+    			if(power_boost_level % 2 == 0){ // 0 or 2
+        			if(power_boost == Team.RED) getProperties(Team.RED).setSwitchScoreMod(2);
+        			if(power_boost == Team.BLUE) getProperties(Team.BLUE).setSwitchScoreMod(2);
+    			}
+    			
+    			if(power_boost_level >= 1){ // 1 or 2
+    				if(power_boost == Team.RED) getProperties(Team.RED).setScaleScoreMod(2);
+        			if(power_boost == Team.BLUE) getProperties(Team.BLUE).setScaleScoreMod(2);
+    			}
+    			
+    			power_boost_timer--;
+    			if(power_boost_timer == 0){
+    				getProperties(Team.RED).setSwitchScoreMod(2);
+    				getProperties(Team.RED).setScaleScoreMod(2);
+    				getProperties(Team.BLUE).setSwitchScoreMod(2);
+    				getProperties(Team.BLUE).setScaleScoreMod(2);
+    				
+    				power_boost = Team.NONE;
+    				if(power_boost_queued != Team.NONE){
+    					forceBoost(power_boost_queued);
+    					power_boost_queued = Team.NONE;
+    				}
+    			}
+    		}
+    		
+    		if(power_force_timer > 0){
+    			if(power_force_level % 2 == 0){ // 0 or 2
+    				if(power_force == Team.RED) getSwitch(Team.RED).setOwnerOverride(Team.RED);
+    				if(power_force == Team.BLUE) getSwitch(Team.BLUE).setOwnerOverride(Team.BLUE);
+    			}
+    			
+    			if(power_force_level >= 1){ // 1 or 2
+    				scale.setOwnerOverride(power_force);
+    			}
+    			
+    			power_force_timer--;
+    			if(power_force_timer == 0){
+    				power_force = Team.NONE;
+    				
+    				getSwitch(Team.RED).setOwnerOverride(Team.NONE);
+    				getSwitch(Team.BLUE).setOwnerOverride(Team.NONE);
+    				scale.setOwnerOverride(Team.NONE);
+    				
+    				if(power_force_queued != Team.NONE){
+    					forceForce(power_force_queued);
+    					power_force_queued = Team.NONE;
+    				}
+    			}
+    		}
+
 		}
-		
-		if(power_force_timer > 0){
-			if(power_force_level % 2 == 0){ // 0 or 2
-				if(power_force == Team.RED) getSwitch(Team.RED).setOwnerOverride(Team.RED);
-				if(power_force == Team.BLUE) getSwitch(Team.BLUE).setOwnerOverride(Team.BLUE);
-			}
-			
-			if(power_force_level >= 1){ // 1 or 2
-				scale.setOwnerOverride(power_force);
-			}
-			
-			power_force_timer--;
-			if(power_force_timer == 0){
-				power_force = Team.NONE;
-				
-				getSwitch(Team.RED).setOwnerOverride(Team.NONE);
-				getSwitch(Team.BLUE).setOwnerOverride(Team.NONE);
-				scale.setOwnerOverride(Team.NONE);
-				
-				if(power_force_queued != Team.NONE){
-					forceForce(power_force_queued);
-					power_force_queued = Team.NONE;
-				}
-			}
-		}
-		
 		// if a power cube is in a team's exchange, increment their cube storage, add some velocity as a fun little animation, and destroy the physical cube after a bit
 		List<PowerCube> cub = new ArrayList<PowerCube>();
 		cub.addAll(cubes);
@@ -752,7 +643,6 @@ public class GameWorld {
 			toRemove.remove(o);
 		}
 		
-		
 		// update the physics world
 		try{
 			getWorld().update(1d/60d);
@@ -765,7 +655,7 @@ public class GameWorld {
 	/**
 	 * Returns the {@link Player} with the specified username.
 	 * @param name - the username to search for.
-	 * @return the {@link Player} with the specified username, or <code>null</code> if they could not be founc.
+	 * @return the {@link Player} with the specified username, or <code>null</code> if they could not be found.
 	 */
 	public Player getPlayer(String name) {
 		for(Player p : players){
@@ -774,6 +664,18 @@ public class GameWorld {
 		return null;
 	}
 
+	/**
+	 * Returns the {@link Player} with the specified {@link Robot}.
+	 * @param rob - the {@link Robot} to search for.
+	 * @return the {@link Player} with the specified {@link Robot}, or <code>null</code> if they could not be found.
+	 */
+	public Player getPlayer(Robot rob) {
+		for(Player p : players){
+			if(p != null && p.getRobot() != null) if(p.getRobot() == rob) return p;
+		}
+		return null;
+	}
+	
 	/**
 	 * @return a {@link List} of all of the connected {@link Player Players}
 	 */
@@ -887,13 +789,13 @@ public class GameWorld {
 	 */
 	public void addScale(Balance balance){
 		scales.add(balance);
+		getWorld().addBody(balance.walls);
+		walls.add(balance.walls);
 		scalePlatforms.add(balance.getRedPlatform());
 		scalePlatforms.add(balance.getBluePlatform());
 		getWorld().addBody(balance.getBluePlatform().base);
 		getWorld().addBody(balance.getRedPlatform().base);
 		
-		getWorld().addBody(balance.walls);
-		walls.add(balance.walls);
 		
 	}
 	
@@ -1180,19 +1082,36 @@ public class GameWorld {
 		return mouseWorldPos;
 	}
 
-	/**
-	 * @return the time remaining in the game, in ticks.
-	 */
-	public int getGameTime() {
-		return gameTime;
+	public void reset() {
+		resetPowerups();
+
+		world.removeAllBodies();
+		walls.clear();
+		cubes.clear();
+		scalePlatforms.clear();
+		scales.clear();
+		exchanging.clear();
+		particles.clear();
+		
+		initializeWorld();
+		
+		for(Player p : players){
+			p.setLocation(new Point2D.Double(0, 0), 0);
+			world.addBody(p.base);
+			p.constructShip();
+		}
 	}
 
-	/**
-	 * Sets the remaining game time.
-	 * @param gameTime - the remaining game time, in ticks.
-	 */
-	public void setGameTime(int gameTime) {
-		this.gameTime = gameTime;
+	public boolean isCameraCentered() {
+		return cameraCentered;
+	}
+
+	public void setCameraCentered(boolean cameraCentered) {
+		this.cameraCentered = cameraCentered;
+	}
+
+	public Scale getScale() {
+		return scale;
 	}
 
 }
