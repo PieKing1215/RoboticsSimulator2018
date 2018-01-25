@@ -16,6 +16,8 @@ import me.pieking.game.gfx.Render;
 import me.pieking.game.menu.SelectScriptMenu;
 import me.pieking.game.robot.Robot;
 import me.pieking.game.scripting.LuaScript;
+import me.pieking.game.sound.Sound;
+import me.pieking.game.sound.SoundClip;
 import me.pieking.game.world.Balance.Team;
 import me.pieking.game.world.GameWorld;
 import me.pieking.game.world.Player;
@@ -23,6 +25,12 @@ import me.pieking.game.world.PowerCube;
 
 public class Gameplay {
 
+	private static SoundClip s_matchEnd = Sound.loadSound("Match End_normalized.wav");
+	private static SoundClip s_matchPause = Sound.loadSound("Match Pause_normalized.wav");
+	private static SoundClip s_startAuton = Sound.loadSound("Start Auto_normalized.wav");
+	private static SoundClip s_startEndgame = Sound.loadSound("Start of End Game_normalized.wav");
+	private static SoundClip s_startTeleop = Sound.loadSound("Start Teleop_normalized.wav");
+	
 	private static final Point2D[] redSpawns;
 	static{
 		redSpawns = new Point2D[3];
@@ -88,6 +96,12 @@ public class Gameplay {
 				if(gameTime <= 0){
 					setState(GameState.MATCH_END);
 				}
+				
+				if(gameTime == 30 * 60) {
+					s_startEndgame.stop();
+					s_startEndgame.start();
+				}
+				
 				break;
 			case MATCH_END:
 				if(gameTime <= 0){
@@ -382,6 +396,9 @@ public class Gameplay {
 				LuaScript ls = Game.getWorld().getSelfPlayer().getRobot().getAutonScript();
 				if(ls != null) ls.run();
 				
+				s_startAuton.stop();
+				s_startAuton.start();
+				
 				break;
 			case TELEOP:
 				gameTime = 135 * 60; // 2m 15s
@@ -389,10 +406,15 @@ public class Gameplay {
 				LuaScript ls2 = Game.getWorld().getSelfPlayer().getRobot().getAutonScript();
 				if(ls2 != null) ls2.stop();
 				
+				s_startTeleop.stop();
+				s_startTeleop.start();
 				break;
 			case MATCH_END:
 				gameTime = 10 * 60; // 2m 15s
 				Robot.setAllEnabled(false);
+				
+				s_matchEnd.stop();
+				s_matchEnd.start();
 				break;
 			default:
 				break;
